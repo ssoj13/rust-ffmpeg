@@ -1,6 +1,8 @@
-use std::cmp::Ordering;
-use std::fmt;
-use std::ops::{Add, Div, Mul, Sub};
+use std::{
+    cmp::Ordering,
+    fmt,
+    ops::{Add, Div, Mul, Sub},
+};
 
 use crate::ffi::*;
 use libc::c_int;
@@ -38,19 +40,9 @@ impl Rational {
             let mut dst_num: c_int = 0;
             let mut dst_den: c_int = 0;
 
-            let exact = av_reduce(
-                &mut dst_num,
-                &mut dst_den,
-                i64::from(self.numerator()),
-                i64::from(self.denominator()),
-                i64::from(max),
-            );
+            let exact = av_reduce(&mut dst_num, &mut dst_den, i64::from(self.numerator()), i64::from(self.denominator()), i64::from(max));
 
-            if exact == 1 {
-                Ok(Rational(dst_num, dst_den))
-            } else {
-                Err(Rational(dst_num, dst_den))
-            }
+            if exact == 1 { Ok(Rational(dst_num, dst_den)) } else { Err(Rational(dst_num, dst_den)) }
         }
     }
 
@@ -70,10 +62,7 @@ impl From<AVRational> for Rational {
 impl From<Rational> for AVRational {
     #[inline]
     fn from(value: Rational) -> AVRational {
-        AVRational {
-            num: value.0,
-            den: value.1,
-        }
+        AVRational { num: value.0, den: value.1 }
     }
 }
 
@@ -182,11 +171,7 @@ impl fmt::Display for Rational {
 
 impl fmt::Debug for Rational {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        f.write_str(&format!(
-            "Rational({}/{})",
-            self.numerator(),
-            self.denominator()
-        ))
+        f.write_str(&format!("Rational({}/{})", self.numerator(), self.denominator()))
     }
 }
 

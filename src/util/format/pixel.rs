@@ -1,10 +1,11 @@
-use std::error;
-use std::ffi::{CStr, CString, NulError};
-use std::fmt;
-use std::str::{from_utf8_unchecked, FromStr};
+use std::{
+    error,
+    ffi::{CStr, CString, NulError},
+    fmt,
+    str::{FromStr, from_utf8_unchecked},
+};
 
-use crate::ffi::AVPixelFormat::*;
-use crate::ffi::*;
+use crate::ffi::{AVPixelFormat::*, *};
 
 #[derive(Eq, PartialEq, Copy, Clone, Debug)]
 pub enum Pixel {
@@ -1582,10 +1583,6 @@ impl FromStr for Pixel {
         let cstring = CString::new(s)?;
         let format = unsafe { av_get_pix_fmt(cstring.as_ptr()) }.into();
 
-        if format == Pixel::None {
-            Err(ParsePixelError::UnknownFormat)
-        } else {
-            Ok(format)
-        }
+        if format == Pixel::None { Err(ParsePixelError::UnknownFormat) } else { Ok(format) }
     }
 }

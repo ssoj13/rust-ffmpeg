@@ -1,12 +1,12 @@
-use std::mem;
-use std::ops::{Deref, DerefMut};
-use std::slice;
+use std::{
+    mem,
+    ops::{Deref, DerefMut},
+    slice,
+};
 
 use super::Frame;
-use crate::ffi::*;
+use crate::{ChannelLayout, ffi::*, util::format};
 use libc::c_int;
-use crate::util::format;
-use crate::ChannelLayout;
 
 #[derive(PartialEq, Eq)]
 pub struct Audio(Frame);
@@ -47,15 +47,7 @@ impl Audio {
 
     #[inline]
     pub fn format(&self) -> format::Sample {
-        unsafe {
-            if (*self.as_ptr()).format == -1 {
-                format::Sample::None
-            } else {
-                format::Sample::from(mem::transmute::<i32, AVSampleFormat>(
-                    (*self.as_ptr()).format,
-                ))
-            }
-        }
+        unsafe { if (*self.as_ptr()).format == -1 { format::Sample::None } else { format::Sample::from(mem::transmute::<i32, AVSampleFormat>((*self.as_ptr()).format)) } }
     }
 
     #[inline]
@@ -158,11 +150,7 @@ impl Audio {
             }
         }
 
-        if self.is_packed() {
-            1
-        } else {
-            self.channels() as usize
-        }
+        if self.is_packed() { 1 } else { self.channels() as usize }
     }
 
     #[inline]
@@ -188,9 +176,7 @@ impl Audio {
             panic!("unsupported type");
         }
 
-        unsafe {
-            slice::from_raw_parts_mut((*self.as_mut_ptr()).data[index] as *mut T, self.samples())
-        }
+        unsafe { slice::from_raw_parts_mut((*self.as_mut_ptr()).data[index] as *mut T, self.samples()) }
     }
 
     #[inline]
@@ -199,12 +185,7 @@ impl Audio {
             panic!("out of bounds");
         }
 
-        unsafe {
-            slice::from_raw_parts(
-                (*self.as_ptr()).data[index],
-                (*self.as_ptr()).linesize[index] as usize,
-            )
-        }
+        unsafe { slice::from_raw_parts((*self.as_ptr()).data[index], (*self.as_ptr()).linesize[index] as usize) }
     }
 
     #[inline]
@@ -213,12 +194,7 @@ impl Audio {
             panic!("out of bounds");
         }
 
-        unsafe {
-            slice::from_raw_parts_mut(
-                (*self.as_mut_ptr()).data[index],
-                (*self.as_ptr()).linesize[index] as usize,
-            )
-        }
+        unsafe { slice::from_raw_parts_mut((*self.as_mut_ptr()).data[index], (*self.as_ptr()).linesize[index] as usize) }
     }
 }
 

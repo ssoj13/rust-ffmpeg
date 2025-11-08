@@ -7,12 +7,7 @@ pub struct ChannelLayout(pub AVChannelLayout);
 impl PartialEq for ChannelLayout {
     // TODO this can actually return an error if < 0
     fn eq(&self, other: &Self) -> bool {
-        unsafe {
-            av_channel_layout_compare(
-                &self.0 as *const AVChannelLayout,
-                &other.0 as *const AVChannelLayout,
-            ) == 0
-        }
+        unsafe { av_channel_layout_compare(&self.0 as *const AVChannelLayout, &other.0 as *const AVChannelLayout) == 0 }
     }
 }
 impl Eq for ChannelLayout {}
@@ -29,12 +24,7 @@ impl std::fmt::Debug for ChannelLayout {
 
 macro_rules! define_layout {
     ($name:ident, $nb:expr, $mask:expr) => {
-        pub const $name: ChannelLayout = ChannelLayout(AVChannelLayout {
-            order: AVChannelOrder::AV_CHANNEL_ORDER_NATIVE,
-            nb_channels: $nb,
-            u: AVChannelLayout__bindgen_ty_1 { mask: $mask },
-            opaque: std::ptr::null_mut(),
-        });
+        pub const $name: ChannelLayout = ChannelLayout(AVChannelLayout { order: AVChannelOrder::AV_CHANNEL_ORDER_NATIVE, nb_channels: $nb, u: AVChannelLayout__bindgen_ty_1 { mask: $mask }, opaque: std::ptr::null_mut() });
     };
 }
 

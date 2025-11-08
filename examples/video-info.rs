@@ -10,9 +10,7 @@
 /// - Dumps first 10 frames to JPEG files (optional)
 use ffmpeg_next as ffmpeg;
 use image::{ImageBuffer, Rgb};
-use std::env;
-use std::fs;
-use std::path::Path;
+use std::{env, fs, path::Path};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Get filename from args
@@ -89,9 +87,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                     let aspect = video.aspect_ratio();
                     if aspect.numerator() > 0 {
-                        println!("    Aspect ratio: {}/{} ({:.2})",
-                            aspect.numerator(), aspect.denominator(),
-                            aspect.numerator() as f64 / aspect.denominator() as f64);
+                        println!("    Aspect ratio: {}/{} ({:.2})", aspect.numerator(), aspect.denominator(), aspect.numerator() as f64 / aspect.denominator() as f64);
                     }
                 }
             }
@@ -144,30 +140,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let input = ictx.stream(stream_idx).unwrap();
         let codec_params = input.parameters();
 
-        let mut decoder = ffmpeg::codec::context::Context::from_parameters(codec_params)?
-            .decoder()
-            .video()?;
+        let mut decoder = ffmpeg::codec::context::Context::from_parameters(codec_params)?.decoder().video()?;
 
         let width = decoder.width();
         let height = decoder.height();
 
         // Setup output directory for frames
-        let output_dir = if args.len() > 2 {
-            args[2].clone()
-        } else {
-            "./frames".to_string()
-        };
+        let output_dir = if args.len() > 2 { args[2].clone() } else { "./frames".to_string() };
 
         // Create scaler for YUV420P -> RGB24 conversion
-        let mut scaler = ffmpeg::software::scaling::Context::get(
-            decoder.format(),
-            width,
-            height,
-            ffmpeg::format::Pixel::RGB24,
-            width,
-            height,
-            ffmpeg::software::scaling::Flags::BILINEAR,
-        )?;
+        let mut scaler = ffmpeg::software::scaling::Context::get(decoder.format(), width, height, ffmpeg::format::Pixel::RGB24, width, height, ffmpeg::software::scaling::Flags::BILINEAR)?;
 
         let mut ictx = ffmpeg::format::input(&input_file)?;
         let mut frames_saved = 0;
@@ -213,11 +195,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                             img_data.extend_from_slice(&rgb_data[row_start..row_end]);
                         }
 
-                        let img: ImageBuffer<Rgb<u8>, Vec<u8>> = ImageBuffer::from_raw(
-                            width,
-                            height,
-                            img_data,
-                        ).ok_or("Failed to create image buffer")?;
+                        let img: ImageBuffer<Rgb<u8>, Vec<u8>> = ImageBuffer::from_raw(width, height, img_data).ok_or("Failed to create image buffer")?;
 
                         img.save(&output_path)?;
                         println!("  ✓ Saved frame {}/{}: {}", frames_saved + 1, MAX_FRAMES, output_path.display());

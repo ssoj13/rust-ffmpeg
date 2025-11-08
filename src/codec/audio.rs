@@ -1,8 +1,7 @@
 use std::ops::Deref;
 
 use super::codec::Codec;
-use crate::ffi::*;
-use {crate::format, crate::ChannelLayout};
+use crate::{ChannelLayout, ffi::*, format};
 
 #[derive(PartialEq, Eq, Copy, Clone)]
 pub struct Audio {
@@ -17,23 +16,11 @@ impl Audio {
 
 impl Audio {
     pub fn rates(&self) -> Option<RateIter> {
-        unsafe {
-            if (*self.as_ptr()).supported_samplerates.is_null() {
-                None
-            } else {
-                Some(RateIter::new((*self.codec.as_ptr()).supported_samplerates))
-            }
-        }
+        unsafe { if (*self.as_ptr()).supported_samplerates.is_null() { None } else { Some(RateIter::new((*self.codec.as_ptr()).supported_samplerates)) } }
     }
 
     pub fn formats(&self) -> Option<FormatIter> {
-        unsafe {
-            if (*self.codec.as_ptr()).sample_fmts.is_null() {
-                None
-            } else {
-                Some(FormatIter::new((*self.codec.as_ptr()).sample_fmts))
-            }
-        }
+        unsafe { if (*self.codec.as_ptr()).sample_fmts.is_null() { None } else { Some(FormatIter::new((*self.codec.as_ptr()).sample_fmts)) } }
     }
 
     pub fn channel_layouts(&self) -> Option<ChannelLayoutIter> {
@@ -44,11 +31,7 @@ impl Audio {
             #[cfg(feature = "ffmpeg_7_0")]
             let ptr = (*self.codec.as_ptr()).ch_layouts;
 
-            if ptr.is_null() {
-                None
-            } else {
-                Some(ChannelLayoutIter::new(ptr))
-            }
+            if ptr.is_null() { None } else { Some(ChannelLayoutIter::new(ptr)) }
         }
     }
 }
@@ -130,13 +113,7 @@ impl ChannelLayoutIter {
     }
 
     pub fn best(self, max: i32) -> ChannelLayout {
-        self.fold(ChannelLayout::MONO, |acc, cur| {
-            if cur.channels() > acc.channels() && cur.channels() <= max as _ {
-                cur
-            } else {
-                acc
-            }
-        })
+        self.fold(ChannelLayout::MONO, |acc, cur| if cur.channels() > acc.channels() && cur.channels() <= max as _ { cur } else { acc })
     }
 }
 

@@ -1,7 +1,9 @@
-use std::ffi::{CStr, CString};
-use std::marker::PhantomData;
-use std::ptr;
-use std::str::from_utf8_unchecked;
+use std::{
+    ffi::{CStr, CString},
+    marker::PhantomData,
+    ptr,
+    str::from_utf8_unchecked,
+};
 
 use crate::ffi::*;
 
@@ -14,12 +16,7 @@ pub struct Iter<'a> {
 
 impl<'a> Iter<'a> {
     pub fn new(dictionary: *const AVDictionary) -> Self {
-        Iter {
-            ptr: dictionary,
-            cur: ptr::null_mut(),
-
-            _marker: PhantomData,
-        }
+        Iter { ptr: dictionary, cur: ptr::null_mut(), _marker: PhantomData }
     }
 }
 

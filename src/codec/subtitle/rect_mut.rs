@@ -1,5 +1,4 @@
-use std::ffi::CString;
-use std::ops::Deref;
+use std::{ffi::CString, ops::Deref};
 
 use super::{Ass, Bitmap, Flags, Text, Type};
 use crate::ffi::*;
@@ -60,9 +59,7 @@ pub struct BitmapMut<'a> {
 
 impl<'a> BitmapMut<'a> {
     pub unsafe fn wrap(ptr: *mut AVSubtitleRect) -> Self {
-        BitmapMut {
-            immutable: unsafe { Bitmap::wrap(ptr as *const _) },
-        }
+        BitmapMut { immutable: unsafe { Bitmap::wrap(ptr as *const _) } }
     }
 
     pub unsafe fn as_mut_ptr(&mut self) -> *mut AVSubtitleRect {
@@ -116,9 +113,7 @@ pub struct TextMut<'a> {
 
 impl<'a> TextMut<'a> {
     pub unsafe fn wrap(ptr: *mut AVSubtitleRect) -> Self {
-        TextMut {
-            immutable: unsafe { Text::wrap(ptr as *const _) },
-        }
+        TextMut { immutable: unsafe { Text::wrap(ptr as *const _) } }
     }
 
     pub unsafe fn as_mut_ptr(&mut self) -> *mut AVSubtitleRect {
@@ -150,9 +145,7 @@ pub struct AssMut<'a> {
 
 impl<'a> AssMut<'a> {
     pub unsafe fn wrap(ptr: *mut AVSubtitleRect) -> Self {
-        AssMut {
-            immutable: unsafe { Ass::wrap(ptr) },
-        }
+        AssMut { immutable: unsafe { Ass::wrap(ptr) } }
     }
 
     pub unsafe fn as_mut_ptr(&mut self) -> *mut AVSubtitleRect {

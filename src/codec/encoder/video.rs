@@ -1,15 +1,22 @@
-use std::ops::{Deref, DerefMut};
-use std::ptr;
+use std::{
+    ops::{Deref, DerefMut},
+    ptr,
+};
 
 use crate::ffi::*;
 use libc::{c_float, c_int};
 
-use super::Encoder as Super;
-use super::{Comparison, Decision};
+use super::{Comparison, Decision, Encoder as Super};
 #[cfg(not(feature = "ffmpeg_5_0"))]
 use super::{MotionEstimation, Prediction};
-use crate::codec::{traits, Context};
-use {crate::color, crate::format, crate::Dictionary, crate::Error, crate::Rational};
+use crate::{
+    Dictionary,
+    Error,
+    Rational,
+    codec::{Context, traits},
+    color,
+    format,
+};
 #[cfg(not(feature = "ffmpeg_5_0"))]
 use {crate::frame, crate::packet};
 
@@ -56,11 +63,7 @@ impl Video {
     }
 
     #[inline]
-    pub fn open_as_with<E: traits::Encoder>(
-        mut self,
-        codec: E,
-        options: Dictionary,
-    ) -> Result<Encoder, Error> {
+    pub fn open_as_with<E: traits::Encoder>(mut self, codec: E, options: Dictionary) -> Result<Encoder, Error> {
         unsafe {
             if let Some(codec) = codec.encoder() {
                 let mut opts = options.disown();
@@ -428,27 +431,15 @@ impl Encoder {
     )]
     #[inline]
     #[cfg(not(feature = "ffmpeg_5_0"))]
-    pub fn encode<P: packet::Mut>(
-        &mut self,
-        frame: &frame::Video,
-        out: &mut P,
-    ) -> Result<bool, Error> {
+    pub fn encode<P: packet::Mut>(&mut self, frame: &frame::Video, out: &mut P) -> Result<bool, Error> {
         unsafe {
-            if self.format() != frame.format()
-                || self.width() != frame.width()
-                || self.height() != frame.height()
-            {
+            if self.format() != frame.format() || self.width() != frame.width() || self.height() != frame.height() {
                 return Err(Error::InvalidData);
             }
 
             let mut got: c_int = 0;
 
-            match avcodec_encode_video2(
-                self.0.as_mut_ptr(),
-                out.as_mut_ptr(),
-                frame.as_ptr(),
-                &mut got,
-            ) {
+            match avcodec_encode_video2(self.0.as_mut_ptr(), out.as_mut_ptr(), frame.as_ptr(), &mut got) {
                 e if e < 0 => Err(Error::from(e)),
                 _ => Ok(got != 0),
             }
@@ -466,12 +457,7 @@ impl Encoder {
         unsafe {
             let mut got: c_int = 0;
 
-            match avcodec_encode_video2(
-                self.0.as_mut_ptr(),
-                out.as_mut_ptr(),
-                ptr::null(),
-                &mut got,
-            ) {
+            match avcodec_encode_video2(self.0.as_mut_ptr(), out.as_mut_ptr(), ptr::null(), &mut got) {
                 e if e < 0 => Err(Error::from(e)),
                 _ => Ok(got != 0),
             }

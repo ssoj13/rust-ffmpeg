@@ -19,8 +19,7 @@ pub mod time;
 #[cfg_attr(not(feature = "ffmpeg_7_0"), path = "legacy_channel_layout.rs")]
 pub mod channel_layout;
 
-use std::ffi::CStr;
-use std::str::from_utf8_unchecked;
+use std::{ffi::CStr, str::from_utf8_unchecked};
 
 use crate::ffi::*;
 

@@ -1,5 +1,4 @@
-use std::ffi::CStr;
-use std::str::from_utf8_unchecked;
+use std::{ffi::CStr, str::from_utf8_unchecked};
 
 use crate::ffi::*;
 
@@ -34,13 +33,7 @@ impl Input {
         unsafe {
             let ptr = (*self.as_ptr()).extensions;
 
-            if ptr.is_null() {
-                Vec::new()
-            } else {
-                from_utf8_unchecked(CStr::from_ptr(ptr).to_bytes())
-                    .split(',')
-                    .collect()
-            }
+            if ptr.is_null() { Vec::new() } else { from_utf8_unchecked(CStr::from_ptr(ptr).to_bytes()).split(',').collect() }
         }
     }
 
@@ -48,13 +41,7 @@ impl Input {
         unsafe {
             let ptr = (*self.as_ptr()).mime_type;
 
-            if ptr.is_null() {
-                Vec::new()
-            } else {
-                from_utf8_unchecked(CStr::from_ptr(ptr).to_bytes())
-                    .split(',')
-                    .collect()
-            }
+            if ptr.is_null() { Vec::new() } else { from_utf8_unchecked(CStr::from_ptr(ptr).to_bytes()).split(',').collect() }
         }
     }
 }

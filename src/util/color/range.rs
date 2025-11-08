@@ -1,8 +1,6 @@
-use std::ffi::CStr;
-use std::str::from_utf8_unchecked;
+use std::{ffi::CStr, str::from_utf8_unchecked};
 
-use crate::ffi::AVColorRange::*;
-use crate::ffi::*;
+use crate::ffi::{AVColorRange::*, *};
 
 #[derive(Eq, PartialEq, Clone, Copy, Debug)]
 pub enum Range {
@@ -18,8 +16,7 @@ impl Range {
         }
         unsafe {
             let ptr = av_color_range_name((*self).into());
-            ptr.as_ref()
-                .map(|ptr| from_utf8_unchecked(CStr::from_ptr(ptr).to_bytes()))
+            ptr.as_ref().map(|ptr| from_utf8_unchecked(CStr::from_ptr(ptr).to_bytes()))
         }
     }
 }

@@ -1,41 +1,16 @@
 use super::Context;
-use crate::util::format;
-use {crate::decoder, crate::frame, crate::ChannelLayout, crate::Error};
+use crate::{ChannelLayout, Error, decoder, frame, util::format};
 
 impl frame::Audio {
     #[inline]
-    pub fn resampler(
-        &self,
-        format: format::Sample,
-        channel_layout: ChannelLayout,
-        rate: u32,
-    ) -> Result<Context, Error> {
-        Context::get(
-            self.format(),
-            self.channel_layout(),
-            unsafe { (*self.as_ptr()).sample_rate as u32 },
-            format,
-            channel_layout,
-            rate,
-        )
+    pub fn resampler(&self, format: format::Sample, channel_layout: ChannelLayout, rate: u32) -> Result<Context, Error> {
+        Context::get(self.format(), self.channel_layout(), unsafe { (*self.as_ptr()).sample_rate as u32 }, format, channel_layout, rate)
     }
 }
 
 impl decoder::Audio {
     #[inline]
-    pub fn resampler(
-        &self,
-        format: format::Sample,
-        channel_layout: ChannelLayout,
-        rate: u32,
-    ) -> Result<Context, Error> {
-        Context::get(
-            self.format(),
-            self.channel_layout(),
-            self.rate(),
-            format,
-            channel_layout,
-            rate,
-        )
+    pub fn resampler(&self, format: format::Sample, channel_layout: ChannelLayout, rate: u32) -> Result<Context, Error> {
+        Context::get(self.format(), self.channel_layout(), self.rate(), format, channel_layout, rate)
     }
 }

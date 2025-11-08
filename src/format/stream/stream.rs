@@ -1,9 +1,13 @@
 use super::Disposition;
-use crate::codec::{self, packet};
-use crate::ffi::*;
-use crate::format::context::common::Context;
+use crate::{
+    DictionaryRef,
+    Discard,
+    Rational,
+    codec::{self, packet},
+    ffi::*,
+    format::context::common::Context,
+};
 use libc::c_int;
-use {crate::DictionaryRef, crate::Discard, crate::Rational};
 
 #[derive(Debug)]
 pub struct Stream<'a> {
@@ -32,9 +36,7 @@ impl<'a> Stream<'a> {
     }
 
     pub fn parameters(&self) -> codec::Parameters {
-        unsafe {
-            codec::Parameters::wrap((*self.as_ptr()).codecpar, Some(self.context.destructor()))
-        }
+        unsafe { codec::Parameters::wrap((*self.as_ptr()).codecpar, Some(self.context.destructor())) }
     }
 
     pub fn index(&self) -> usize {
@@ -113,11 +115,7 @@ impl<'a> Iterator for SideDataIter<'a> {
 
             self.current += 1;
 
-            Some(packet::SideData::wrap(
-                (*self.stream.as_ptr())
-                    .side_data
-                    .offset((self.current - 1) as isize),
-            ))
+            Some(packet::SideData::wrap((*self.stream.as_ptr()).side_data.offset((self.current - 1) as isize)))
         }
         #[cfg(feature = "ffmpeg_8_0")]
         unsafe {
@@ -127,11 +125,7 @@ impl<'a> Iterator for SideDataIter<'a> {
 
             self.current += 1;
 
-            Some(packet::SideData::wrap(
-                (*self.stream.parameters().as_ptr())
-                    .coded_side_data
-                    .offset((self.current - 1) as isize) as *mut _,
-            ))
+            Some(packet::SideData::wrap((*self.stream.parameters().as_ptr()).coded_side_data.offset((self.current - 1) as isize) as *mut _))
         }
     }
 
@@ -142,10 +136,7 @@ impl<'a> Iterator for SideDataIter<'a> {
             #[cfg(feature = "ffmpeg_8_0")]
             let length = (*self.stream.parameters().as_ptr()).nb_coded_side_data as usize;
 
-            (
-                length - self.current as usize,
-                Some(length - self.current as usize),
-            )
+            (length - self.current as usize, Some(length - self.current as usize))
         }
     }
 }

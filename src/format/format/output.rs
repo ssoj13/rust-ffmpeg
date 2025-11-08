@@ -1,12 +1,13 @@
 use std::path::Path;
 
-use std::ffi::{CStr, CString};
-use std::ptr;
-use std::str::from_utf8_unchecked;
+use std::{
+    ffi::{CStr, CString},
+    ptr,
+    str::from_utf8_unchecked,
+};
 
 use super::Flags;
-use crate::ffi::*;
-use {crate::codec, crate::media};
+use crate::{codec, ffi::*, media};
 
 pub struct Output {
     ptr: *mut AVOutputFormat,
@@ -39,13 +40,7 @@ impl Output {
         unsafe {
             let ptr = (*self.as_ptr()).extensions;
 
-            if ptr.is_null() {
-                Vec::new()
-            } else {
-                from_utf8_unchecked(CStr::from_ptr(ptr).to_bytes())
-                    .split(',')
-                    .collect()
-            }
+            if ptr.is_null() { Vec::new() } else { from_utf8_unchecked(CStr::from_ptr(ptr).to_bytes()).split(',').collect() }
         }
     }
 
@@ -53,13 +48,7 @@ impl Output {
         unsafe {
             let ptr = (*self.as_ptr()).mime_type;
 
-            if ptr.is_null() {
-                Vec::new()
-            } else {
-                from_utf8_unchecked(CStr::from_ptr(ptr).to_bytes())
-                    .split(',')
-                    .collect()
-            }
+            if ptr.is_null() { Vec::new() } else { from_utf8_unchecked(CStr::from_ptr(ptr).to_bytes()).split(',').collect() }
         }
     }
 
@@ -67,15 +56,7 @@ impl Output {
         // XXX: use to_cstring when stable
         let path = CString::new(path.as_ref().as_os_str().to_str().unwrap()).unwrap();
 
-        unsafe {
-            codec::Id::from(av_guess_codec(
-                self.as_ptr() as *mut _,
-                ptr::null(),
-                path.as_ptr(),
-                ptr::null(),
-                kind.into(),
-            ))
-        }
+        unsafe { codec::Id::from(av_guess_codec(self.as_ptr() as *mut _, ptr::null(), path.as_ptr(), ptr::null(), kind.into())) }
     }
 
     pub fn flags(&self) -> Flags {

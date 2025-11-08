@@ -1,18 +1,37 @@
-use std::error;
-use std::ffi::CStr;
-use std::fmt;
-use std::io;
-use std::str::from_utf8_unchecked;
+use std::{error, ffi::CStr, fmt, io, str::from_utf8_unchecked};
 
 use crate::ffi::{
-    av_strerror, AVERROR, AVERROR_BSF_NOT_FOUND, AVERROR_BUFFER_TOO_SMALL, AVERROR_BUG,
-    AVERROR_BUG2, AVERROR_DECODER_NOT_FOUND, AVERROR_DEMUXER_NOT_FOUND, AVERROR_ENCODER_NOT_FOUND,
-    AVERROR_EOF, AVERROR_EXIT, AVERROR_EXPERIMENTAL, AVERROR_EXTERNAL, AVERROR_FILTER_NOT_FOUND,
-    AVERROR_HTTP_BAD_REQUEST, AVERROR_HTTP_FORBIDDEN, AVERROR_HTTP_NOT_FOUND,
-    AVERROR_HTTP_OTHER_4XX, AVERROR_HTTP_SERVER_ERROR, AVERROR_HTTP_UNAUTHORIZED,
-    AVERROR_INPUT_CHANGED, AVERROR_INVALIDDATA, AVERROR_MUXER_NOT_FOUND, AVERROR_OPTION_NOT_FOUND,
-    AVERROR_OUTPUT_CHANGED, AVERROR_PATCHWELCOME, AVERROR_PROTOCOL_NOT_FOUND,
-    AVERROR_STREAM_NOT_FOUND, AVERROR_UNKNOWN, AVUNERROR, AV_ERROR_MAX_STRING_SIZE,
+    AV_ERROR_MAX_STRING_SIZE,
+    AVERROR,
+    AVERROR_BSF_NOT_FOUND,
+    AVERROR_BUFFER_TOO_SMALL,
+    AVERROR_BUG,
+    AVERROR_BUG2,
+    AVERROR_DECODER_NOT_FOUND,
+    AVERROR_DEMUXER_NOT_FOUND,
+    AVERROR_ENCODER_NOT_FOUND,
+    AVERROR_EOF,
+    AVERROR_EXIT,
+    AVERROR_EXPERIMENTAL,
+    AVERROR_EXTERNAL,
+    AVERROR_FILTER_NOT_FOUND,
+    AVERROR_HTTP_BAD_REQUEST,
+    AVERROR_HTTP_FORBIDDEN,
+    AVERROR_HTTP_NOT_FOUND,
+    AVERROR_HTTP_OTHER_4XX,
+    AVERROR_HTTP_SERVER_ERROR,
+    AVERROR_HTTP_UNAUTHORIZED,
+    AVERROR_INPUT_CHANGED,
+    AVERROR_INVALIDDATA,
+    AVERROR_MUXER_NOT_FOUND,
+    AVERROR_OPTION_NOT_FOUND,
+    AVERROR_OUTPUT_CHANGED,
+    AVERROR_PATCHWELCOME,
+    AVERROR_PROTOCOL_NOT_FOUND,
+    AVERROR_STREAM_NOT_FOUND,
+    AVERROR_UNKNOWN,
+    AVUNERROR,
+    av_strerror,
 };
 use libc::{c_char, c_int};
 
@@ -22,14 +41,80 @@ use libc::{c_char, c_int};
 //       ...
 //   }
 pub use libc::{
-    E2BIG, EACCES, EADDRINUSE, EADDRNOTAVAIL, EAFNOSUPPORT, EAGAIN, EALREADY, EBADF, EBADMSG,
-    EBUSY, ECANCELED, ECHILD, ECONNABORTED, ECONNREFUSED, ECONNRESET, EDEADLK, EDESTADDRREQ, EDOM,
-    EEXIST, EFAULT, EFBIG, EHOSTUNREACH, EIDRM, EILSEQ, EINPROGRESS, EINTR, EINVAL, EIO, EISCONN,
-    EISDIR, ELOOP, EMFILE, EMLINK, EMSGSIZE, ENAMETOOLONG, ENETDOWN, ENETRESET, ENETUNREACH,
-    ENFILE, ENOBUFS, ENODEV, ENOENT, ENOEXEC, ENOLCK, ENOLINK, ENOMEM, ENOMSG, ENOPROTOOPT, ENOSPC,
-    ENOSYS, ENOTCONN, ENOTDIR, ENOTEMPTY, ENOTRECOVERABLE, ENOTSOCK, ENOTSUP, ENOTTY, ENXIO,
-    EOPNOTSUPP, EOVERFLOW, EOWNERDEAD, EPERM, EPIPE, EPROTO, EPROTONOSUPPORT, EPROTOTYPE, ERANGE,
-    EROFS, ESPIPE, ESRCH, ETIMEDOUT, ETXTBSY, EWOULDBLOCK, EXDEV,
+    E2BIG,
+    EACCES,
+    EADDRINUSE,
+    EADDRNOTAVAIL,
+    EAFNOSUPPORT,
+    EAGAIN,
+    EALREADY,
+    EBADF,
+    EBADMSG,
+    EBUSY,
+    ECANCELED,
+    ECHILD,
+    ECONNABORTED,
+    ECONNREFUSED,
+    ECONNRESET,
+    EDEADLK,
+    EDESTADDRREQ,
+    EDOM,
+    EEXIST,
+    EFAULT,
+    EFBIG,
+    EHOSTUNREACH,
+    EIDRM,
+    EILSEQ,
+    EINPROGRESS,
+    EINTR,
+    EINVAL,
+    EIO,
+    EISCONN,
+    EISDIR,
+    ELOOP,
+    EMFILE,
+    EMLINK,
+    EMSGSIZE,
+    ENAMETOOLONG,
+    ENETDOWN,
+    ENETRESET,
+    ENETUNREACH,
+    ENFILE,
+    ENOBUFS,
+    ENODEV,
+    ENOENT,
+    ENOEXEC,
+    ENOLCK,
+    ENOLINK,
+    ENOMEM,
+    ENOMSG,
+    ENOPROTOOPT,
+    ENOSPC,
+    ENOSYS,
+    ENOTCONN,
+    ENOTDIR,
+    ENOTEMPTY,
+    ENOTRECOVERABLE,
+    ENOTSOCK,
+    ENOTSUP,
+    ENOTTY,
+    ENXIO,
+    EOPNOTSUPP,
+    EOVERFLOW,
+    EOWNERDEAD,
+    EPERM,
+    EPIPE,
+    EPROTO,
+    EPROTONOSUPPORT,
+    EPROTOTYPE,
+    ERANGE,
+    EROFS,
+    ESPIPE,
+    ESRCH,
+    ETIMEDOUT,
+    ETXTBSY,
+    EWOULDBLOCK,
+    EXDEV,
 };
 #[cfg(not(any(target_os = "freebsd", target_os = "wasi")))]
 pub use libc::{ENODATA, ENOSR, ENOSTR, ETIME};
@@ -103,9 +188,7 @@ impl From<c_int> for Error {
             AVERROR_HTTP_NOT_FOUND => Error::HttpNotFound,
             AVERROR_HTTP_OTHER_4XX => Error::HttpOther4xx,
             AVERROR_HTTP_SERVER_ERROR => Error::HttpServerError,
-            e => Error::Other {
-                errno: AVUNERROR(e),
-            },
+            e => Error::Other { errno: AVUNERROR(e) },
         }
     }
 }
@@ -215,144 +298,36 @@ static mut STRINGS: [[c_char; AV_ERROR_MAX_STRING_SIZE]; 27] = [[0; AV_ERROR_MAX
 
 pub fn register_all() {
     unsafe {
-        av_strerror(
-            Error::Bug.into(),
-            STRINGS[index(&Error::Bug)].as_mut_ptr(),
-            AV_ERROR_MAX_STRING_SIZE,
-        );
-        av_strerror(
-            Error::Bug2.into(),
-            STRINGS[index(&Error::Bug2)].as_mut_ptr(),
-            AV_ERROR_MAX_STRING_SIZE,
-        );
-        av_strerror(
-            Error::Unknown.into(),
-            STRINGS[index(&Error::Unknown)].as_mut_ptr(),
-            AV_ERROR_MAX_STRING_SIZE,
-        );
-        av_strerror(
-            Error::Experimental.into(),
-            STRINGS[index(&Error::Experimental)].as_mut_ptr(),
-            AV_ERROR_MAX_STRING_SIZE,
-        );
-        av_strerror(
-            Error::BufferTooSmall.into(),
-            STRINGS[index(&Error::BufferTooSmall)].as_mut_ptr(),
-            AV_ERROR_MAX_STRING_SIZE,
-        );
-        av_strerror(
-            Error::Eof.into(),
-            STRINGS[index(&Error::Eof)].as_mut_ptr(),
-            AV_ERROR_MAX_STRING_SIZE,
-        );
-        av_strerror(
-            Error::Exit.into(),
-            STRINGS[index(&Error::Exit)].as_mut_ptr(),
-            AV_ERROR_MAX_STRING_SIZE,
-        );
-        av_strerror(
-            Error::External.into(),
-            STRINGS[index(&Error::External)].as_mut_ptr(),
-            AV_ERROR_MAX_STRING_SIZE,
-        );
-        av_strerror(
-            Error::InvalidData.into(),
-            STRINGS[index(&Error::InvalidData)].as_mut_ptr(),
-            AV_ERROR_MAX_STRING_SIZE,
-        );
-        av_strerror(
-            Error::PatchWelcome.into(),
-            STRINGS[index(&Error::PatchWelcome)].as_mut_ptr(),
-            AV_ERROR_MAX_STRING_SIZE,
-        );
+        av_strerror(Error::Bug.into(), STRINGS[index(&Error::Bug)].as_mut_ptr(), AV_ERROR_MAX_STRING_SIZE);
+        av_strerror(Error::Bug2.into(), STRINGS[index(&Error::Bug2)].as_mut_ptr(), AV_ERROR_MAX_STRING_SIZE);
+        av_strerror(Error::Unknown.into(), STRINGS[index(&Error::Unknown)].as_mut_ptr(), AV_ERROR_MAX_STRING_SIZE);
+        av_strerror(Error::Experimental.into(), STRINGS[index(&Error::Experimental)].as_mut_ptr(), AV_ERROR_MAX_STRING_SIZE);
+        av_strerror(Error::BufferTooSmall.into(), STRINGS[index(&Error::BufferTooSmall)].as_mut_ptr(), AV_ERROR_MAX_STRING_SIZE);
+        av_strerror(Error::Eof.into(), STRINGS[index(&Error::Eof)].as_mut_ptr(), AV_ERROR_MAX_STRING_SIZE);
+        av_strerror(Error::Exit.into(), STRINGS[index(&Error::Exit)].as_mut_ptr(), AV_ERROR_MAX_STRING_SIZE);
+        av_strerror(Error::External.into(), STRINGS[index(&Error::External)].as_mut_ptr(), AV_ERROR_MAX_STRING_SIZE);
+        av_strerror(Error::InvalidData.into(), STRINGS[index(&Error::InvalidData)].as_mut_ptr(), AV_ERROR_MAX_STRING_SIZE);
+        av_strerror(Error::PatchWelcome.into(), STRINGS[index(&Error::PatchWelcome)].as_mut_ptr(), AV_ERROR_MAX_STRING_SIZE);
 
-        av_strerror(
-            Error::InputChanged.into(),
-            STRINGS[index(&Error::InputChanged)].as_mut_ptr(),
-            AV_ERROR_MAX_STRING_SIZE,
-        );
-        av_strerror(
-            Error::OutputChanged.into(),
-            STRINGS[index(&Error::OutputChanged)].as_mut_ptr(),
-            AV_ERROR_MAX_STRING_SIZE,
-        );
+        av_strerror(Error::InputChanged.into(), STRINGS[index(&Error::InputChanged)].as_mut_ptr(), AV_ERROR_MAX_STRING_SIZE);
+        av_strerror(Error::OutputChanged.into(), STRINGS[index(&Error::OutputChanged)].as_mut_ptr(), AV_ERROR_MAX_STRING_SIZE);
 
-        av_strerror(
-            Error::BsfNotFound.into(),
-            STRINGS[index(&Error::BsfNotFound)].as_mut_ptr(),
-            AV_ERROR_MAX_STRING_SIZE,
-        );
-        av_strerror(
-            Error::DecoderNotFound.into(),
-            STRINGS[index(&Error::DecoderNotFound)].as_mut_ptr(),
-            AV_ERROR_MAX_STRING_SIZE,
-        );
-        av_strerror(
-            Error::DemuxerNotFound.into(),
-            STRINGS[index(&Error::DemuxerNotFound)].as_mut_ptr(),
-            AV_ERROR_MAX_STRING_SIZE,
-        );
-        av_strerror(
-            Error::EncoderNotFound.into(),
-            STRINGS[index(&Error::EncoderNotFound)].as_mut_ptr(),
-            AV_ERROR_MAX_STRING_SIZE,
-        );
-        av_strerror(
-            Error::OptionNotFound.into(),
-            STRINGS[index(&Error::OptionNotFound)].as_mut_ptr(),
-            AV_ERROR_MAX_STRING_SIZE,
-        );
-        av_strerror(
-            Error::MuxerNotFound.into(),
-            STRINGS[index(&Error::MuxerNotFound)].as_mut_ptr(),
-            AV_ERROR_MAX_STRING_SIZE,
-        );
-        av_strerror(
-            Error::FilterNotFound.into(),
-            STRINGS[index(&Error::FilterNotFound)].as_mut_ptr(),
-            AV_ERROR_MAX_STRING_SIZE,
-        );
-        av_strerror(
-            Error::ProtocolNotFound.into(),
-            STRINGS[index(&Error::ProtocolNotFound)].as_mut_ptr(),
-            AV_ERROR_MAX_STRING_SIZE,
-        );
-        av_strerror(
-            Error::StreamNotFound.into(),
-            STRINGS[index(&Error::StreamNotFound)].as_mut_ptr(),
-            AV_ERROR_MAX_STRING_SIZE,
-        );
+        av_strerror(Error::BsfNotFound.into(), STRINGS[index(&Error::BsfNotFound)].as_mut_ptr(), AV_ERROR_MAX_STRING_SIZE);
+        av_strerror(Error::DecoderNotFound.into(), STRINGS[index(&Error::DecoderNotFound)].as_mut_ptr(), AV_ERROR_MAX_STRING_SIZE);
+        av_strerror(Error::DemuxerNotFound.into(), STRINGS[index(&Error::DemuxerNotFound)].as_mut_ptr(), AV_ERROR_MAX_STRING_SIZE);
+        av_strerror(Error::EncoderNotFound.into(), STRINGS[index(&Error::EncoderNotFound)].as_mut_ptr(), AV_ERROR_MAX_STRING_SIZE);
+        av_strerror(Error::OptionNotFound.into(), STRINGS[index(&Error::OptionNotFound)].as_mut_ptr(), AV_ERROR_MAX_STRING_SIZE);
+        av_strerror(Error::MuxerNotFound.into(), STRINGS[index(&Error::MuxerNotFound)].as_mut_ptr(), AV_ERROR_MAX_STRING_SIZE);
+        av_strerror(Error::FilterNotFound.into(), STRINGS[index(&Error::FilterNotFound)].as_mut_ptr(), AV_ERROR_MAX_STRING_SIZE);
+        av_strerror(Error::ProtocolNotFound.into(), STRINGS[index(&Error::ProtocolNotFound)].as_mut_ptr(), AV_ERROR_MAX_STRING_SIZE);
+        av_strerror(Error::StreamNotFound.into(), STRINGS[index(&Error::StreamNotFound)].as_mut_ptr(), AV_ERROR_MAX_STRING_SIZE);
 
-        av_strerror(
-            Error::HttpBadRequest.into(),
-            STRINGS[index(&Error::HttpBadRequest)].as_mut_ptr(),
-            AV_ERROR_MAX_STRING_SIZE,
-        );
-        av_strerror(
-            Error::HttpUnauthorized.into(),
-            STRINGS[index(&Error::HttpUnauthorized)].as_mut_ptr(),
-            AV_ERROR_MAX_STRING_SIZE,
-        );
-        av_strerror(
-            Error::HttpForbidden.into(),
-            STRINGS[index(&Error::HttpForbidden)].as_mut_ptr(),
-            AV_ERROR_MAX_STRING_SIZE,
-        );
-        av_strerror(
-            Error::HttpNotFound.into(),
-            STRINGS[index(&Error::HttpNotFound)].as_mut_ptr(),
-            AV_ERROR_MAX_STRING_SIZE,
-        );
-        av_strerror(
-            Error::HttpOther4xx.into(),
-            STRINGS[index(&Error::HttpOther4xx)].as_mut_ptr(),
-            AV_ERROR_MAX_STRING_SIZE,
-        );
-        av_strerror(
-            Error::HttpServerError.into(),
-            STRINGS[index(&Error::HttpServerError)].as_mut_ptr(),
-            AV_ERROR_MAX_STRING_SIZE,
-        );
+        av_strerror(Error::HttpBadRequest.into(), STRINGS[index(&Error::HttpBadRequest)].as_mut_ptr(), AV_ERROR_MAX_STRING_SIZE);
+        av_strerror(Error::HttpUnauthorized.into(), STRINGS[index(&Error::HttpUnauthorized)].as_mut_ptr(), AV_ERROR_MAX_STRING_SIZE);
+        av_strerror(Error::HttpForbidden.into(), STRINGS[index(&Error::HttpForbidden)].as_mut_ptr(), AV_ERROR_MAX_STRING_SIZE);
+        av_strerror(Error::HttpNotFound.into(), STRINGS[index(&Error::HttpNotFound)].as_mut_ptr(), AV_ERROR_MAX_STRING_SIZE);
+        av_strerror(Error::HttpOther4xx.into(), STRINGS[index(&Error::HttpOther4xx)].as_mut_ptr(), AV_ERROR_MAX_STRING_SIZE);
+        av_strerror(Error::HttpServerError.into(), STRINGS[index(&Error::HttpServerError)].as_mut_ptr(), AV_ERROR_MAX_STRING_SIZE);
     }
 }
 
@@ -363,19 +338,13 @@ mod tests {
     #[test]
     fn test_error_roundtrip() {
         assert_eq!(Into::<c_int>::into(Error::from(AVERROR_EOF)), AVERROR_EOF);
-        assert_eq!(
-            Into::<c_int>::into(Error::from(AVERROR(EAGAIN))),
-            AVERROR(EAGAIN)
-        );
+        assert_eq!(Into::<c_int>::into(Error::from(AVERROR(EAGAIN))), AVERROR(EAGAIN));
         assert_eq!(Error::from(AVERROR(EAGAIN)), Error::Other { errno: EAGAIN });
     }
 
     #[cfg(any(target_os = "linux", target_os = "macos"))]
     #[test]
     fn test_posix_error_string() {
-        assert_eq!(
-            Error::from(AVERROR(EAGAIN)).to_string(),
-            "Resource temporarily unavailable"
-        )
+        assert_eq!(Error::from(AVERROR(EAGAIN)).to_string(), "Resource temporarily unavailable")
     }
 }

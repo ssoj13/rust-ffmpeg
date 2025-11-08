@@ -7,11 +7,9 @@ pub use self::rect::{Ass, Bitmap, Rect, Text};
 mod rect_mut;
 pub use self::rect_mut::{AssMut, BitmapMut, RectMut, TextMut};
 
-use std::marker::PhantomData;
-use std::mem;
+use std::{marker::PhantomData, mem};
 
-use crate::ffi::AVSubtitleType::*;
-use crate::ffi::*;
+use crate::ffi::{AVSubtitleType::*, *};
 use libc::{c_uint, size_t};
 
 #[derive(Eq, PartialEq, Clone, Copy, Debug)]
@@ -99,13 +97,9 @@ impl Subtitle {
     pub fn add_rect(&mut self, kind: Type) -> RectMut<'_> {
         unsafe {
             self.0.num_rects += 1;
-            self.0.rects = av_realloc(
-                self.0.rects as *mut _,
-                (mem::size_of::<*const AVSubtitleRect>() * self.0.num_rects as usize) as size_t,
-            ) as *mut _;
+            self.0.rects = av_realloc(self.0.rects as *mut _, (mem::size_of::<*const AVSubtitleRect>() * self.0.num_rects as usize) as size_t) as *mut _;
 
-            let rect =
-                av_mallocz(mem::size_of::<AVSubtitleRect>() as size_t) as *mut AVSubtitleRect;
+            let rect = av_mallocz(mem::size_of::<AVSubtitleRect>() as size_t) as *mut AVSubtitleRect;
             (*rect).type_ = kind.into();
 
             *self.0.rects.offset((self.0.num_rects - 1) as isize) = rect;
@@ -130,11 +124,7 @@ pub struct RectIter<'a> {
 
 impl<'a> RectIter<'a> {
     pub fn new(ptr: *const AVSubtitle) -> Self {
-        RectIter {
-            ptr,
-            cur: 0,
-            _marker: PhantomData,
-        }
+        RectIter { ptr, cur: 0, _marker: PhantomData }
     }
 }
 
@@ -147,9 +137,7 @@ impl<'a> Iterator for RectIter<'a> {
                 None
             } else {
                 self.cur += 1;
-                Some(Rect::wrap(
-                    *(*self.ptr).rects.offset((self.cur - 1) as isize),
-                ))
+                Some(Rect::wrap(*(*self.ptr).rects.offset((self.cur - 1) as isize)))
             }
         }
     }
@@ -174,11 +162,7 @@ pub struct RectMutIter<'a> {
 
 impl<'a> RectMutIter<'a> {
     pub fn new(ptr: *mut AVSubtitle) -> Self {
-        RectMutIter {
-            ptr,
-            cur: 0,
-            _marker: PhantomData,
-        }
+        RectMutIter { ptr, cur: 0, _marker: PhantomData }
     }
 }
 
@@ -191,9 +175,7 @@ impl<'a> Iterator for RectMutIter<'a> {
                 None
             } else {
                 self.cur += 1;
-                Some(RectMut::wrap(
-                    *(*self.ptr).rects.offset((self.cur - 1) as isize),
-                ))
+                Some(RectMut::wrap(*(*self.ptr).rects.offset((self.cur - 1) as isize)))
             }
         }
     }

@@ -1,9 +1,7 @@
-use std::marker::PhantomData;
-use std::slice;
+use std::{marker::PhantomData, slice};
 
 use super::Packet;
-use crate::ffi::AVPacketSideDataType::*;
-use crate::ffi::*;
+use crate::ffi::{AVPacketSideDataType::*, *};
 
 #[derive(Eq, PartialEq, Copy, Clone, Debug)]
 pub enum Type {
@@ -229,10 +227,7 @@ pub struct SideData<'a> {
 
 impl<'a> SideData<'a> {
     pub unsafe fn wrap(ptr: *mut AVPacketSideData) -> Self {
-        SideData {
-            ptr,
-            _marker: PhantomData,
-        }
+        SideData { ptr, _marker: PhantomData }
     }
 
     pub unsafe fn as_ptr(&self) -> *const AVPacketSideData {

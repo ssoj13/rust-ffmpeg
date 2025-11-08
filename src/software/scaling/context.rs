@@ -1,10 +1,8 @@
 use std::ptr;
 
 use super::Flags;
-use crate::ffi::*;
+use crate::{Error, ffi::*, frame, util::format};
 use libc::c_int;
-use crate::util::format;
-use {crate::frame, crate::Error};
 
 #[derive(Eq, PartialEq, Copy, Clone, Debug)]
 pub struct Definition {
@@ -33,87 +31,21 @@ impl Context {
 }
 
 impl Context {
-    pub fn get(
-        src_format: format::Pixel,
-        src_w: u32,
-        src_h: u32,
-        dst_format: format::Pixel,
-        dst_w: u32,
-        dst_h: u32,
-        flags: Flags,
-    ) -> Result<Self, Error> {
+    pub fn get(src_format: format::Pixel, src_w: u32, src_h: u32, dst_format: format::Pixel, dst_w: u32, dst_h: u32, flags: Flags) -> Result<Self, Error> {
         unsafe {
-            let ptr = sws_getContext(
-                src_w as c_int,
-                src_h as c_int,
-                src_format.into(),
-                dst_w as c_int,
-                dst_h as c_int,
-                dst_format.into(),
-                flags.bits(),
-                ptr::null_mut(),
-                ptr::null_mut(),
-                ptr::null_mut(),
-            );
+            let ptr = sws_getContext(src_w as c_int, src_h as c_int, src_format.into(), dst_w as c_int, dst_h as c_int, dst_format.into(), flags.bits(), ptr::null_mut(), ptr::null_mut(), ptr::null_mut());
 
-            if !ptr.is_null() {
-                Ok(Context {
-                    ptr,
-
-                    input: Definition {
-                        format: src_format,
-                        width: src_w,
-                        height: src_h,
-                    },
-
-                    output: Definition {
-                        format: dst_format,
-                        width: dst_w,
-                        height: dst_h,
-                    },
-                })
-            } else {
-                Err(Error::InvalidData)
-            }
+            if !ptr.is_null() { Ok(Context { ptr, input: Definition { format: src_format, width: src_w, height: src_h }, output: Definition { format: dst_format, width: dst_w, height: dst_h } }) } else { Err(Error::InvalidData) }
         }
     }
 
-    pub fn cached(
-        &mut self,
-        src_format: format::Pixel,
-        src_w: u32,
-        src_h: u32,
-        dst_format: format::Pixel,
-        dst_w: u32,
-        dst_h: u32,
-        flags: Flags,
-    ) {
-        self.input = Definition {
-            format: src_format,
-            width: src_w,
-            height: src_h,
-        };
+    pub fn cached(&mut self, src_format: format::Pixel, src_w: u32, src_h: u32, dst_format: format::Pixel, dst_w: u32, dst_h: u32, flags: Flags) {
+        self.input = Definition { format: src_format, width: src_w, height: src_h };
 
-        self.output = Definition {
-            format: dst_format,
-            width: dst_w,
-            height: dst_h,
-        };
+        self.output = Definition { format: dst_format, width: dst_w, height: dst_h };
 
         unsafe {
-            self.ptr = sws_getCachedContext(
-                self.as_mut_ptr(),
-                src_w as c_int,
-                src_h as c_int,
-                src_format.into(),
-                dst_w as c_int,
-                dst_h as c_int,
-                dst_format.into(),
-                flags.bits(),
-                ptr::null_mut(),
-                ptr::null_mut(),
-                ptr::null(),
-            );
+            self.ptr = sws_getCachedContext(self.as_mut_ptr(), src_w as c_int, src_h as c_int, src_format.into(), dst_w as c_int, dst_h as c_int, dst_format.into(), flags.bits(), ptr::null_mut(), ptr::null_mut(), ptr::null());
         }
     }
 
@@ -128,10 +60,7 @@ impl Context {
     }
 
     pub fn run(&mut self, input: &frame::Video, output: &mut frame::Video) -> Result<(), Error> {
-        if input.format() != self.input.format
-            || input.width() != self.input.width
-            || input.height() != self.input.height
-        {
+        if input.format() != self.input.format || input.width() != self.input.width || input.height() != self.input.height {
             return Err(Error::InputChanged);
         }
 
@@ -141,10 +70,7 @@ impl Context {
             }
         }
 
-        if output.format() != self.output.format
-            || output.width() != self.output.width
-            || output.height() != self.output.height
-        {
+        if output.format() != self.output.format || output.width() != self.output.width || output.height() != self.output.height {
             return Err(Error::OutputChanged);
         }
 

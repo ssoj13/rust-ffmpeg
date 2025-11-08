@@ -1,36 +1,32 @@
-use std::ops::{Deref, DerefMut};
-use std::ptr;
+use std::{
+    ops::{Deref, DerefMut},
+    ptr,
+};
 
 use super::{Audio, Decoder, Subtitle, Video};
-use crate::codec::{Context, Profile};
-use crate::ffi::*;
-use {crate::media, crate::packet, crate::Error, crate::Frame, crate::Rational};
+use crate::{
+    Error,
+    Frame,
+    Rational,
+    codec::{Context, Profile},
+    ffi::*,
+    media,
+    packet,
+};
 
 pub struct Opened(pub Decoder);
 
 impl Opened {
     pub fn video(self) -> Result<Video, Error> {
-        if self.medium() == media::Type::Video {
-            Ok(Video(self))
-        } else {
-            Err(Error::InvalidData)
-        }
+        if self.medium() == media::Type::Video { Ok(Video(self)) } else { Err(Error::InvalidData) }
     }
 
     pub fn audio(self) -> Result<Audio, Error> {
-        if self.medium() == media::Type::Audio {
-            Ok(Audio(self))
-        } else {
-            Err(Error::InvalidData)
-        }
+        if self.medium() == media::Type::Audio { Ok(Audio(self)) } else { Err(Error::InvalidData) }
     }
 
     pub fn subtitle(self) -> Result<Subtitle, Error> {
-        if self.medium() == media::Type::Subtitle {
-            Ok(Subtitle(self))
-        } else {
-            Err(Error::InvalidData)
-        }
+        if self.medium() == media::Type::Subtitle { Ok(Subtitle(self)) } else { Err(Error::InvalidData) }
     }
 
     pub fn send_packet<P: packet::Ref>(&mut self, packet: &P) -> Result<(), Error> {
@@ -78,11 +74,7 @@ impl Opened {
         unsafe {
             let value = (*self.as_ptr()).framerate;
 
-            if value == (AVRational { num: 0, den: 1 }) {
-                None
-            } else {
-                Some(Rational::from(value))
-            }
+            if value == (AVRational { num: 0, den: 1 }) { None } else { Some(Rational::from(value)) }
         }
     }
 

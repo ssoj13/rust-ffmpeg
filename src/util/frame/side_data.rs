@@ -1,12 +1,10 @@
-use std::ffi::CStr;
-use std::marker::PhantomData;
-use std::slice;
-use std::str::from_utf8_unchecked;
+use std::{ffi::CStr, marker::PhantomData, slice, str::from_utf8_unchecked};
 
 use super::Frame;
-use crate::ffi::AVFrameSideDataType::*;
-use crate::ffi::*;
-use crate::DictionaryRef;
+use crate::{
+    DictionaryRef,
+    ffi::{AVFrameSideDataType::*, *},
+};
 
 #[derive(Eq, PartialEq, Copy, Clone, Debug)]
 pub enum Type {
@@ -77,9 +75,7 @@ pub enum Type {
 impl Type {
     #[inline]
     pub fn name(&self) -> &'static str {
-        unsafe {
-            from_utf8_unchecked(CStr::from_ptr(av_frame_side_data_name((*self).into())).to_bytes())
-        }
+        unsafe { from_utf8_unchecked(CStr::from_ptr(av_frame_side_data_name((*self).into())).to_bytes()) }
     }
 }
 
@@ -230,10 +226,7 @@ pub struct SideData<'a> {
 impl<'a> SideData<'a> {
     #[inline(always)]
     pub unsafe fn wrap(ptr: *mut AVFrameSideData) -> Self {
-        SideData {
-            ptr,
-            _marker: PhantomData,
-        }
+        SideData { ptr, _marker: PhantomData }
     }
 
     #[inline(always)]

@@ -1,11 +1,7 @@
-use std::marker::PhantomData;
-use std::mem;
-use std::slice;
+use std::{marker::PhantomData, mem, slice};
 
-use crate::ffi::*;
-use crate::format;
+use crate::{Error, ffi::*, format};
 use libc::{c_int, size_t};
-use crate::Error;
 
 pub struct Picture<'a> {
     ptr: *mut AVPicture,
@@ -19,22 +15,8 @@ pub struct Picture<'a> {
 }
 
 impl<'a> Picture<'a> {
-    pub unsafe fn wrap(
-        ptr: *mut AVPicture,
-        format: format::Pixel,
-        width: u32,
-        height: u32,
-    ) -> Self {
-        Picture {
-            ptr,
-
-            format,
-            width,
-            height,
-
-            _own: false,
-            _marker: PhantomData,
-        }
+    pub unsafe fn wrap(ptr: *mut AVPicture, format: format::Pixel, width: u32, height: u32) -> Self {
+        Picture { ptr, format, width, height, _own: false, _marker: PhantomData }
     }
 
     pub unsafe fn as_ptr(&self) -> *const AVPicture {
@@ -61,16 +43,7 @@ impl<'a> Picture<'a> {
             let ptr = av_malloc(mem::size_of::<AVPicture>() as size_t) as *mut AVPicture;
 
             match avpicture_alloc(ptr, format.into(), width as c_int, height as c_int) {
-                0 => Ok(Picture {
-                    ptr,
-
-                    format,
-                    width,
-                    height,
-
-                    _own: true,
-                    _marker: PhantomData,
-                }),
+                0 => Ok(Picture { ptr, format, width, height, _own: true, _marker: PhantomData }),
 
                 e => Err(Error::from(e)),
             }
@@ -91,36 +64,16 @@ impl<'a> Picture<'a> {
 
     pub fn layout(&self, out: &mut [u8]) -> Result<usize, Error> {
         unsafe {
-            match avpicture_layout(
-                self.ptr,
-                self.format.into(),
-                self.width as c_int,
-                self.height as c_int,
-                out.as_mut_ptr(),
-                out.len() as c_int,
-            ) {
+            match avpicture_layout(self.ptr, self.format.into(), self.width as c_int, self.height as c_int, out.as_mut_ptr(), out.len() as c_int) {
                 s if s >= 0 => Ok(s as usize),
                 e => Err(Error::from(e)),
             }
         }
     }
 
-    pub fn layout_as(
-        &self,
-        format: format::Pixel,
-        width: u32,
-        height: u32,
-        out: &mut [u8],
-    ) -> Result<usize, Error> {
+    pub fn layout_as(&self, format: format::Pixel, width: u32, height: u32, out: &mut [u8]) -> Result<usize, Error> {
         unsafe {
-            match avpicture_layout(
-                self.as_ptr(),
-                format.into(),
-                width as c_int,
-                height as c_int,
-                out.as_mut_ptr(),
-                out.len() as c_int,
-            ) {
+            match avpicture_layout(self.as_ptr(), format.into(), width as c_int, height as c_int, out.as_mut_ptr(), out.len() as c_int) {
                 s if s >= 0 => Ok(s as usize),
                 e => Err(Error::from(e)),
             }
@@ -133,13 +86,7 @@ impl<'a> Picture<'a> {
         }
 
         unsafe {
-            match av_picture_crop(
-                source.as_mut_ptr(),
-                self.as_ptr(),
-                self.format.into(),
-                top as c_int,
-                left as c_int,
-            ) {
+            match av_picture_crop(source.as_mut_ptr(), self.as_ptr(), self.format.into(), top as c_int, left as c_int) {
                 0 => Ok(()),
                 e => Err(Error::from(e)),
             }
@@ -150,16 +97,8 @@ impl<'a> Picture<'a> {
         let mut result = Vec::new();
 
         unsafe {
-            for (i, length) in (*self.as_ptr())
-                .linesize
-                .iter()
-                .take_while(|l| **l > 0)
-                .enumerate()
-            {
-                result.push(slice::from_raw_parts(
-                    (*self.as_ptr()).data[i],
-                    (*length as usize) * (self.height as usize),
-                ))
+            for (i, length) in (*self.as_ptr()).linesize.iter().take_while(|l| **l > 0).enumerate() {
+                result.push(slice::from_raw_parts((*self.as_ptr()).data[i], (*length as usize) * (self.height as usize)))
             }
         }
 
@@ -170,16 +109,8 @@ impl<'a> Picture<'a> {
         let mut result = Vec::new();
 
         unsafe {
-            for (i, length) in (*self.as_ptr())
-                .linesize
-                .iter()
-                .take_while(|l| **l > 0)
-                .enumerate()
-            {
-                result.push(slice::from_raw_parts_mut(
-                    (*self.as_ptr()).data[i],
-                    (*length as usize) * (self.height as usize),
-                ))
+            for (i, length) in (*self.as_ptr()).linesize.iter().take_while(|l| **l > 0).enumerate() {
+                result.push(slice::from_raw_parts_mut((*self.as_ptr()).data[i], (*length as usize) * (self.height as usize)))
             }
         }
 
@@ -197,13 +128,7 @@ impl<'a> Clone for Picture<'a> {
 
     fn clone_from(&mut self, source: &Self) {
         unsafe {
-            av_picture_copy(
-                self.as_mut_ptr(),
-                source.as_ptr(),
-                source.format.into(),
-                source.width as c_int,
-                source.height as c_int,
-            );
+            av_picture_copy(self.as_mut_ptr(), source.as_ptr(), source.format.into(), source.width as c_int, source.height as c_int);
         }
     }
 }

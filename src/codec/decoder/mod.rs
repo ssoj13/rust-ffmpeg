@@ -23,10 +23,11 @@ pub use self::opened::Opened;
 
 use std::ffi::CString;
 
-use crate::codec::Context;
-use crate::codec::Id;
-use crate::ffi::*;
-use crate::Codec;
+use crate::{
+    Codec,
+    codec::{Context, Id},
+    ffi::*,
+};
 
 pub fn new() -> Decoder {
     Context::new().decoder()
@@ -38,11 +39,7 @@ pub fn find(id: Id) -> Option<Codec> {
         #[allow(clippy::unnecessary_cast)]
         let ptr = avcodec_find_decoder(id.into()) as *mut AVCodec;
 
-        if ptr.is_null() {
-            None
-        } else {
-            Some(Codec::wrap(ptr))
-        }
+        if ptr.is_null() { None } else { Some(Codec::wrap(ptr)) }
     }
 }
 
@@ -52,10 +49,6 @@ pub fn find_by_name(name: &str) -> Option<Codec> {
         #[allow(clippy::unnecessary_cast)]
         let ptr = avcodec_find_decoder_by_name(name.as_ptr()) as *mut AVCodec;
 
-        if ptr.is_null() {
-            None
-        } else {
-            Some(Codec::wrap(ptr))
-        }
+        if ptr.is_null() { None } else { Some(Codec::wrap(ptr)) }
     }
 }

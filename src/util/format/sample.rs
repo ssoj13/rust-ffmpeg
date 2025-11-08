@@ -1,11 +1,12 @@
-use std::ffi::{CStr, CString};
-use std::ops::Index;
-use std::ptr;
-use std::slice;
-use std::str::from_utf8_unchecked;
+use std::{
+    ffi::{CStr, CString},
+    ops::Index,
+    ptr,
+    slice,
+    str::from_utf8_unchecked,
+};
 
-use crate::ffi::AVSampleFormat::*;
-use crate::ffi::*;
+use crate::ffi::{AVSampleFormat::*, *};
 use libc::{c_int, c_void};
 
 #[derive(Eq, PartialEq, Copy, Clone, Debug)]
@@ -29,9 +30,7 @@ pub enum Type {
 impl Sample {
     #[inline]
     pub fn name(&self) -> &'static str {
-        unsafe {
-            from_utf8_unchecked(CStr::from_ptr(av_get_sample_fmt_name((*self).into())).to_bytes())
-        }
+        unsafe { from_utf8_unchecked(CStr::from_ptr(av_get_sample_fmt_name((*self).into())).to_bytes()) }
     }
 
     #[inline]
@@ -137,38 +136,15 @@ pub struct Buffer {
 impl Buffer {
     #[inline]
     pub fn size(format: Sample, channels: u16, samples: usize, align: bool) -> usize {
-        unsafe {
-            av_samples_get_buffer_size(
-                ptr::null_mut(),
-                i32::from(channels),
-                samples as c_int,
-                format.into(),
-                !align as c_int,
-            ) as usize
-        }
+        unsafe { av_samples_get_buffer_size(ptr::null_mut(), i32::from(channels), samples as c_int, format.into(), !align as c_int) as usize }
     }
 
     #[inline]
     pub fn new(format: Sample, channels: u16, samples: usize, align: bool) -> Self {
         unsafe {
-            let mut buf = Buffer {
-                format,
-                channels,
-                samples,
-                align,
+            let mut buf = Buffer { format, channels, samples, align, buffer: ptr::null_mut(), size: 0 };
 
-                buffer: ptr::null_mut(),
-                size: 0,
-            };
-
-            av_samples_alloc_array_and_samples(
-                &mut buf.buffer,
-                &mut buf.size,
-                i32::from(channels),
-                samples as c_int,
-                format.into(),
-                !align as c_int,
-            );
+            av_samples_alloc_array_and_samples(&mut buf.buffer, &mut buf.size, i32::from(channels), samples as c_int, format.into(), !align as c_int);
 
             buf
         }
@@ -200,15 +176,7 @@ impl Clone for Buffer {
     #[inline]
     fn clone_from(&mut self, source: &Self) {
         unsafe {
-            av_samples_copy(
-                self.buffer,
-                source.buffer as *const *mut u8,
-                0,
-                0,
-                source.samples as c_int,
-                i32::from(source.channels),
-                source.format.into(),
-            );
+            av_samples_copy(self.buffer, source.buffer as *const *mut u8, 0, 0, source.samples as c_int, i32::from(source.channels), source.format.into());
         }
     }
 }

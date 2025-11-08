@@ -1,6 +1,8 @@
 use super::{decoder, encoder};
-use crate::codec::{Audio, Id, Video};
-use crate::Codec;
+use crate::{
+    Codec,
+    codec::{Audio, Id, Video},
+};
 
 pub trait Decoder {
     fn decoder(self) -> Option<Codec>;
@@ -20,11 +22,7 @@ impl Decoder for Id {
 
 impl Decoder for Codec {
     fn decoder(self) -> Option<Codec> {
-        if self.is_decoder() {
-            Some(self)
-        } else {
-            None
-        }
+        if self.is_decoder() { Some(self) } else { None }
     }
 }
 
@@ -36,21 +34,13 @@ impl Decoder for Option<Codec> {
 
 impl Decoder for Audio {
     fn decoder(self) -> Option<Codec> {
-        if self.is_decoder() {
-            Some(*self)
-        } else {
-            None
-        }
+        if self.is_decoder() { Some(*self) } else { None }
     }
 }
 
 impl Decoder for Video {
     fn decoder(self) -> Option<Codec> {
-        if self.is_decoder() {
-            Some(*self)
-        } else {
-            None
-        }
+        if self.is_decoder() { Some(*self) } else { None }
     }
 }
 
@@ -72,11 +62,7 @@ impl Encoder for Id {
 
 impl Encoder for Codec {
     fn encoder(self) -> Option<Codec> {
-        if self.is_encoder() {
-            Some(self)
-        } else {
-            None
-        }
+        if self.is_encoder() { Some(self) } else { None }
     }
 }
 
@@ -88,20 +74,12 @@ impl Encoder for Option<Codec> {
 
 impl Encoder for Audio {
     fn encoder(self) -> Option<Codec> {
-        if self.is_encoder() {
-            Some(*self)
-        } else {
-            None
-        }
+        if self.is_encoder() { Some(*self) } else { None }
     }
 }
 
 impl Encoder for Video {
     fn encoder(self) -> Option<Codec> {
-        if self.is_encoder() {
-            Some(*self)
-        } else {
-            None
-        }
+        if self.is_encoder() { Some(*self) } else { None }
     }
 }

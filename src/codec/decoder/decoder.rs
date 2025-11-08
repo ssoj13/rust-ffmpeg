@@ -1,10 +1,17 @@
-use std::ops::{Deref, DerefMut};
-use std::ptr;
+use std::{
+    ops::{Deref, DerefMut},
+    ptr,
+};
 
 use super::{Audio, Check, Conceal, Opened, Subtitle, Video};
-use crate::codec::{traits, Context};
-use crate::ffi::*;
-use {crate::Dictionary, crate::Discard, crate::Error, crate::Rational};
+use crate::{
+    Dictionary,
+    Discard,
+    Error,
+    Rational,
+    codec::{Context, traits},
+    ffi::*,
+};
 
 pub struct Decoder(pub Context);
 
@@ -31,11 +38,7 @@ impl Decoder {
         }
     }
 
-    pub fn open_as_with<D: traits::Decoder>(
-        mut self,
-        codec: D,
-        options: Dictionary,
-    ) -> Result<Opened, Error> {
+    pub fn open_as_with<D: traits::Decoder>(mut self, codec: D, options: Dictionary) -> Result<Opened, Error> {
         unsafe {
             if let Some(codec) = codec.decoder() {
                 let mut opts = options.disown();
@@ -74,11 +77,7 @@ impl Decoder {
     }
 
     pub fn subtitle(self) -> Result<Subtitle, Error> {
-        if let Some(codec) = super::find(self.id()) {
-            self.open_as(codec).and_then(|o| o.subtitle())
-        } else {
-            Err(Error::DecoderNotFound)
-        }
+        if let Some(codec) = super::find(self.id()) { self.open_as(codec).and_then(|o| o.subtitle()) } else { Err(Error::DecoderNotFound) }
     }
 
     pub fn conceal(&mut self, value: Conceal) {

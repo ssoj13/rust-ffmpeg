@@ -4,16 +4,18 @@ use std::ops::{Deref, DerefMut};
 use crate::ffi::*;
 use libc::c_int;
 
-use super::{slice, Opened};
-use crate::codec::Context;
-use crate::color;
+use super::{Opened, slice};
 #[cfg(not(feature = "ffmpeg_5_0"))]
 use crate::frame;
-use crate::util::chroma;
-use crate::util::format;
+use crate::{
+    FieldOrder,
+    Rational,
+    codec::Context,
+    color,
+    util::{chroma, format},
+};
 #[cfg(not(feature = "ffmpeg_5_0"))]
-use {crate::packet, crate::Error};
-use {crate::FieldOrder, crate::Rational};
+use {crate::Error, crate::packet};
 
 pub struct Video(pub Opened);
 
@@ -24,20 +26,11 @@ impl Video {
         consider switching to send_packet() and receive_frame()"
     )]
     #[cfg(not(feature = "ffmpeg_5_0"))]
-    pub fn decode<P: packet::Ref>(
-        &mut self,
-        packet: &P,
-        out: &mut frame::Video,
-    ) -> Result<bool, Error> {
+    pub fn decode<P: packet::Ref>(&mut self, packet: &P, out: &mut frame::Video) -> Result<bool, Error> {
         unsafe {
             let mut got: c_int = 0;
 
-            match avcodec_decode_video2(
-                self.as_mut_ptr(),
-                out.as_mut_ptr(),
-                &mut got,
-                packet.as_ptr(),
-            ) {
+            match avcodec_decode_video2(self.as_mut_ptr(), out.as_mut_ptr(), &mut got, packet.as_ptr()) {
                 e if e < 0 => Err(Error::from(e)),
                 _ => Ok(got != 0),
             }

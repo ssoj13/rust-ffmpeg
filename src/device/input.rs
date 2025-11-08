@@ -1,8 +1,6 @@
 use std::ptr;
 
-use crate::ffi::*;
-use crate::format;
-use crate::Format;
+use crate::{Format, ffi::*, format};
 
 pub struct AudioIter(*mut AVInputFormat);
 

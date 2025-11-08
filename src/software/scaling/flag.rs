@@ -1,7 +1,7 @@
 use crate::ffi::*;
-use libc::c_int;
 #[cfg(feature = "ffmpeg_8_0")]
 use crate::software::scaling::SwsFlags::*;
+use libc::c_int;
 
 bitflags! {
     #[derive(Copy, Clone, Debug, PartialEq, Eq)]

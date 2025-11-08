@@ -1,11 +1,8 @@
-use std::marker::PhantomData;
-use std::mem;
-use std::slice;
+use std::{marker::PhantomData, mem, slice};
 
 use super::{Borrow, Flags, Mut, Ref, SideData};
-use crate::ffi::*;
+use crate::{Error, Rational, ffi::*, format};
 use libc::c_int;
-use {crate::format, crate::Error, crate::Rational};
 
 pub struct Packet(AVPacket);
 
@@ -79,11 +76,7 @@ impl Packet {
         D: Into<Rational>,
     {
         unsafe {
-            av_packet_rescale_ts(
-                self.as_mut_ptr(),
-                source.into().into(),
-                destination.into().into(),
-            );
+            av_packet_rescale_ts(self.as_mut_ptr(), source.into().into(), destination.into().into());
         }
     }
 
@@ -193,24 +186,12 @@ impl Packet {
 
     #[inline]
     pub fn data(&self) -> Option<&[u8]> {
-        unsafe {
-            if self.0.data.is_null() {
-                None
-            } else {
-                Some(slice::from_raw_parts(self.0.data, self.0.size as usize))
-            }
-        }
+        unsafe { if self.0.data.is_null() { None } else { Some(slice::from_raw_parts(self.0.data, self.0.size as usize)) } }
     }
 
     #[inline]
     pub fn data_mut(&mut self) -> Option<&mut [u8]> {
-        unsafe {
-            if self.0.data.is_null() {
-                None
-            } else {
-                Some(slice::from_raw_parts_mut(self.0.data, self.0.size as usize))
-            }
-        }
+        unsafe { if self.0.data.is_null() { None } else { Some(slice::from_raw_parts_mut(self.0.data, self.0.size as usize)) } }
     }
 
     #[inline]
@@ -305,11 +286,7 @@ pub struct SideDataIter<'a> {
 
 impl<'a> SideDataIter<'a> {
     pub fn new(ptr: *const AVPacket) -> Self {
-        SideDataIter {
-            ptr,
-            cur: 0,
-            _marker: PhantomData,
-        }
+        SideDataIter { ptr, cur: 0, _marker: PhantomData }
     }
 }
 
@@ -322,9 +299,7 @@ impl<'a> Iterator for SideDataIter<'a> {
                 None
             } else {
                 self.cur += 1;
-                Some(SideData::wrap(
-                    (*self.ptr).side_data.offset((self.cur - 1) as isize),
-                ))
+                Some(SideData::wrap((*self.ptr).side_data.offset((self.cur - 1) as isize)))
             }
         }
     }

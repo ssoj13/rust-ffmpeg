@@ -2,9 +2,7 @@ pub mod extensions;
 pub mod input;
 pub mod output;
 
-use std::ffi::CStr;
-use std::marker::PhantomData;
-use std::str::from_utf8_unchecked;
+use std::{ffi::CStr, marker::PhantomData, str::from_utf8_unchecked};
 
 use crate::ffi::*;
 
@@ -16,10 +14,7 @@ pub struct Info<'a> {
 
 impl<'a> Info<'a> {
     pub unsafe fn wrap(ptr: *mut AVDeviceInfo) -> Self {
-        Info {
-            ptr,
-            _marker: PhantomData,
-        }
+        Info { ptr, _marker: PhantomData }
     }
 
     pub unsafe fn as_ptr(&self) -> *const AVDeviceInfo {
@@ -37,9 +32,7 @@ impl<'a> Info<'a> {
     }
 
     pub fn description(&self) -> &str {
-        unsafe {
-            from_utf8_unchecked(CStr::from_ptr((*self.as_ptr()).device_description).to_bytes())
-        }
+        unsafe { from_utf8_unchecked(CStr::from_ptr((*self.as_ptr()).device_description).to_bytes()) }
     }
 }
 

@@ -1,5 +1,4 @@
-use std::panic;
-use std::process;
+use std::{panic, process};
 
 use crate::ffi::*;
 use libc::{c_int, c_void};
@@ -24,11 +23,6 @@ pub fn new<F>(opaque: Box<F>) -> Interrupt
 where
     F: FnMut() -> bool,
 {
-    let interrupt_cb = AVIOInterruptCB {
-        callback: Some(callback::<F>),
-        opaque: Box::into_raw(opaque) as *mut c_void,
-    };
-    Interrupt {
-        interrupt: interrupt_cb,
-    }
+    let interrupt_cb = AVIOInterruptCB { callback: Some(callback::<F>), opaque: Box::into_raw(opaque) as *mut c_void };
+    Interrupt { interrupt: interrupt_cb }
 }

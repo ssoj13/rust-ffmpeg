@@ -1,5 +1,4 @@
-use crate::ffi::*;
-use {crate::Rational, crate::Rounding};
+use crate::{Rational, Rounding, ffi::*};
 
 pub const TIME_BASE: Rational = Rational(AV_TIME_BASE_Q.num, AV_TIME_BASE_Q.den);
 
@@ -21,13 +20,7 @@ impl<T: Into<i64> + Clone> Rescale for T {
         S: Into<Rational>,
         D: Into<Rational>,
     {
-        unsafe {
-            av_rescale_q(
-                self.clone().into(),
-                source.into().into(),
-                destination.into().into(),
-            )
-        }
+        unsafe { av_rescale_q(self.clone().into(), source.into().into(), destination.into().into()) }
     }
 
     fn rescale_with<S, D>(&self, source: S, destination: D, rounding: Rounding) -> i64
@@ -35,13 +28,6 @@ impl<T: Into<i64> + Clone> Rescale for T {
         S: Into<Rational>,
         D: Into<Rational>,
     {
-        unsafe {
-            av_rescale_q_rnd(
-                self.clone().into(),
-                source.into().into(),
-                destination.into().into(),
-                rounding.into(),
-            )
-        }
+        unsafe { av_rescale_q_rnd(self.clone().into(), source.into().into(), destination.into().into(), rounding.into()) }
     }
 }

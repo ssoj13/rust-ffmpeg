@@ -1,9 +1,6 @@
-use std::ffi::CStr;
-use std::marker::PhantomData;
-use std::str::from_utf8_unchecked;
+use std::{ffi::CStr, marker::PhantomData, str::from_utf8_unchecked};
 
-use crate::ffi::*;
-use crate::media;
+use crate::{ffi::*, media};
 
 pub struct Pad<'a> {
     ptr: *const AVFilterPad,
@@ -14,11 +11,7 @@ pub struct Pad<'a> {
 
 impl<'a> Pad<'a> {
     pub unsafe fn wrap(ptr: *const AVFilterPad, idx: isize) -> Self {
-        Pad {
-            ptr,
-            idx,
-            _marker: PhantomData,
-        }
+        Pad { ptr, idx, _marker: PhantomData }
     }
 
     pub unsafe fn as_ptr(&self) -> *const AVFilterPad {
@@ -35,11 +28,7 @@ impl<'a> Pad<'a> {
         unsafe {
             let ptr = avfilter_pad_get_name(self.ptr, self.idx as i32);
 
-            if ptr.is_null() {
-                None
-            } else {
-                Some(from_utf8_unchecked(CStr::from_ptr(ptr).to_bytes()))
-            }
+            if ptr.is_null() { None } else { Some(from_utf8_unchecked(CStr::from_ptr(ptr).to_bytes())) }
         }
     }
 

@@ -1,15 +1,18 @@
-use std::mem;
-use std::ops::{Deref, DerefMut};
-use std::slice;
+use std::{
+    mem,
+    ops::{Deref, DerefMut},
+    slice,
+};
 
 use super::Frame;
-use crate::color;
-use crate::ffi::*;
+use crate::{
+    Rational,
+    color,
+    ffi::*,
+    picture,
+    util::{chroma, format},
+};
 use libc::c_int;
-use crate::picture;
-use crate::util::chroma;
-use crate::util::format;
-use crate::Rational;
 
 #[derive(PartialEq, Eq)]
 pub struct Video(Frame);
@@ -50,15 +53,7 @@ impl Video {
 
     #[inline]
     pub fn format(&self) -> format::Pixel {
-        unsafe {
-            if (*self.as_ptr()).format == -1 {
-                format::Pixel::None
-            } else {
-                format::Pixel::from(mem::transmute::<i32, AVPixelFormat>(
-                    (*self.as_ptr()).format,
-                ))
-            }
-        }
+        unsafe { if (*self.as_ptr()).format == -1 { format::Pixel::None } else { format::Pixel::from(mem::transmute::<i32, AVPixelFormat>((*self.as_ptr()).format)) } }
     }
 
     #[inline]
@@ -279,12 +274,7 @@ impl Video {
             panic!("unsupported type");
         }
 
-        unsafe {
-            slice::from_raw_parts(
-                (*self.as_ptr()).data[index] as *const T,
-                self.stride(index) * self.plane_height(index) as usize / mem::size_of::<T>(),
-            )
-        }
+        unsafe { slice::from_raw_parts((*self.as_ptr()).data[index] as *const T, self.stride(index) * self.plane_height(index) as usize / mem::size_of::<T>()) }
     }
 
     #[inline]
@@ -297,12 +287,7 @@ impl Video {
             panic!("unsupported type");
         }
 
-        unsafe {
-            slice::from_raw_parts_mut(
-                (*self.as_mut_ptr()).data[index] as *mut T,
-                self.stride(index) * self.plane_height(index) as usize / mem::size_of::<T>(),
-            )
-        }
+        unsafe { slice::from_raw_parts_mut((*self.as_mut_ptr()).data[index] as *mut T, self.stride(index) * self.plane_height(index) as usize / mem::size_of::<T>()) }
     }
 
     #[inline]
@@ -311,12 +296,7 @@ impl Video {
             panic!("out of bounds");
         }
 
-        unsafe {
-            slice::from_raw_parts(
-                (*self.as_ptr()).data[index],
-                self.stride(index) * self.plane_height(index) as usize,
-            )
-        }
+        unsafe { slice::from_raw_parts((*self.as_ptr()).data[index], self.stride(index) * self.plane_height(index) as usize) }
     }
 
     #[inline]
@@ -325,12 +305,7 @@ impl Video {
             panic!("out of bounds");
         }
 
-        unsafe {
-            slice::from_raw_parts_mut(
-                (*self.as_mut_ptr()).data[index],
-                self.stride(index) * self.plane_height(index) as usize,
-            )
-        }
+        unsafe { slice::from_raw_parts_mut((*self.as_mut_ptr()).data[index], self.stride(index) * self.plane_height(index) as usize) }
     }
 }
 

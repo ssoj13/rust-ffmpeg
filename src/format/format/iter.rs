@@ -17,11 +17,7 @@ enum Step {
 
 impl Iter {
     pub fn new() -> Self {
-        Iter {
-            input: ptr::null_mut(),
-            output: ptr::null_mut(),
-            step: Step::Input,
-        }
+        Iter { input: ptr::null_mut(), output: ptr::null_mut(), step: Step::Input }
     }
 }
 

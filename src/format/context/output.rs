@@ -1,15 +1,14 @@
-use std::ffi::CString;
-use std::mem::size_of;
-use std::ops::{Deref, DerefMut};
-use std::ptr;
+use std::{
+    ffi::CString,
+    mem::size_of,
+    ops::{Deref, DerefMut},
+    ptr,
+};
 
 use libc;
 
-use super::common::Context;
-use super::destructor;
-use crate::codec::traits;
-use crate::ffi::*;
-use {crate::codec, crate::format, crate::ChapterMut, crate::Dictionary, crate::Error, crate::Rational, crate::StreamMut};
+use super::{common::Context, destructor};
+use crate::{ChapterMut, Dictionary, Error, Rational, StreamMut, codec, codec::traits, ffi::*, format};
 
 pub struct Output {
     ptr: *mut AVFormatContext,
@@ -20,10 +19,7 @@ unsafe impl Send for Output {}
 
 impl Output {
     pub unsafe fn wrap(ptr: *mut AVFormatContext) -> Self {
-        Output {
-            ptr,
-            ctx: unsafe { Context::wrap(ptr, destructor::Mode::Output) },
-        }
+        Output { ptr, ctx: unsafe { Context::wrap(ptr, destructor::Mode::Output) } }
     }
 
     pub unsafe fn as_ptr(&self) -> *const AVFormatContext {
@@ -109,14 +105,7 @@ impl Output {
         }
     }
 
-    pub fn add_chapter<R: Into<Rational>, S: AsRef<str>>(
-        &mut self,
-        id: i64,
-        time_base: R,
-        start: i64,
-        end: i64,
-        title: S,
-    ) -> Result<ChapterMut<'_>, Error> {
+    pub fn add_chapter<R: Into<Rational>, S: AsRef<str>>(&mut self, id: i64, time_base: R, start: i64, end: i64, title: S) -> Result<ChapterMut<'_>, Error> {
         // avpriv_new_chapter is private (libavformat/internal.h)
 
         if start > end {
@@ -134,17 +123,11 @@ impl Output {
         let index = match existing {
             Some(index) => index,
             None => unsafe {
-                let ptr = av_mallocz(size_of::<AVChapter>())
-                    .as_mut()
-                    .ok_or(Error::Bug)?;
+                let ptr = av_mallocz(size_of::<AVChapter>()).as_mut().ok_or(Error::Bug)?;
                 let mut nb_chapters = (*self.as_ptr()).nb_chapters as i32;
 
                 // chapters array will be freed by `avformat_free_context`
-                av_dynarray_add(
-                    &mut (*self.as_mut_ptr()).chapters as *mut _ as *mut libc::c_void,
-                    &mut nb_chapters,
-                    ptr,
-                );
+                av_dynarray_add(&mut (*self.as_mut_ptr()).chapters as *mut _ as *mut libc::c_void, &mut nb_chapters, ptr);
 
                 if nb_chapters > 0 {
                     (*self.as_mut_ptr()).nb_chapters = nb_chapters as u32;
@@ -194,11 +177,6 @@ pub fn dump(ctx: &Output, index: i32, url: Option<&str>) {
     let url = url.map(|u| CString::new(u).unwrap());
 
     unsafe {
-        av_dump_format(
-            ctx.as_ptr() as *mut _,
-            index,
-            url.unwrap_or_else(|| CString::new("").unwrap()).as_ptr(),
-            1,
-        );
+        av_dump_format(ctx.as_ptr() as *mut _, index, url.unwrap_or_else(|| CString::new("").unwrap()).as_ptr(), 1);
     }
 }

@@ -1,14 +1,8 @@
-use std::any::Any;
-use std::ptr;
-use std::rc::Rc;
+use std::{any::Any, ptr, rc::Rc};
 
-use super::decoder::Decoder;
-use super::encoder::Encoder;
-use super::{threading, Compliance, Debug, Flags, Id, Parameters};
-use crate::ffi::*;
+use super::{Compliance, Debug, Flags, Id, Parameters, decoder::Decoder, encoder::Encoder, threading};
+use crate::{Codec, Error, Rational, ffi::*, media};
 use libc::c_int;
-use crate::media;
-use {crate::Codec, crate::Error, crate::Rational};
 
 pub struct Context {
     ptr: *mut AVCodecContext,
@@ -33,21 +27,11 @@ impl Context {
 
 impl Context {
     pub fn new() -> Self {
-        unsafe {
-            Context {
-                ptr: avcodec_alloc_context3(ptr::null()),
-                owner: None,
-            }
-        }
+        unsafe { Context { ptr: avcodec_alloc_context3(ptr::null()), owner: None } }
     }
 
     pub fn new_with_codec(codec: Codec) -> Self {
-        unsafe {
-            Context {
-                ptr: avcodec_alloc_context3(codec.as_ptr()),
-                owner: None,
-            }
-        }
+        unsafe { Context { ptr: avcodec_alloc_context3(codec.as_ptr()), owner: None } }
     }
 
     pub fn from_parameters<P: Into<Parameters>>(parameters: P) -> Result<Self, Error> {
@@ -71,13 +55,7 @@ impl Context {
     }
 
     pub fn codec(&self) -> Option<Codec> {
-        unsafe {
-            if (*self.as_ptr()).codec.is_null() {
-                None
-            } else {
-                Some(Codec::wrap((*self.as_ptr()).codec as *mut _))
-            }
-        }
+        unsafe { if (*self.as_ptr()).codec.is_null() { None } else { Some(Codec::wrap((*self.as_ptr()).codec as *mut _)) } }
     }
 
     pub fn medium(&self) -> media::Type {

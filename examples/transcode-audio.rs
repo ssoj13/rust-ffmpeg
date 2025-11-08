@@ -1,25 +1,13 @@
 extern crate ffmpeg_next as ffmpeg;
 
-use std::env;
-use std::path::Path;
+use std::{env, path::Path};
 
-use ffmpeg::{codec, filter, format, frame, media};
-use ffmpeg::{rescale, Rescale};
+use ffmpeg::{Rescale, codec, filter, format, frame, media, rescale};
 
-fn filter(
-    spec: &str,
-    decoder: &codec::decoder::Audio,
-    encoder: &codec::encoder::Audio,
-) -> Result<filter::Graph, ffmpeg::Error> {
+fn filter(spec: &str, decoder: &codec::decoder::Audio, encoder: &codec::encoder::Audio) -> Result<filter::Graph, ffmpeg::Error> {
     let mut filter = filter::Graph::new();
 
-    let args = format!(
-        "time_base={}:sample_rate={}:sample_fmt={}:channel_layout=0x{:x}",
-        decoder.time_base(),
-        decoder.rate(),
-        decoder.format().name(),
-        decoder.channel_layout().bits()
-    );
+    let args = format!("time_base={}:sample_rate={}:sample_fmt={}:channel_layout=0x{:x}", decoder.time_base(), decoder.rate(), decoder.format().name(), decoder.channel_layout().bits());
 
     filter.add(&filter::find("abuffer").unwrap(), "in", &args)?;
     filter.add(&filter::find("abuffersink").unwrap(), "out", "")?;
@@ -38,15 +26,9 @@ fn filter(
     println!("{}", filter.dump());
 
     if let Some(codec) = encoder.codec()
-        && !codec
-            .capabilities()
-            .contains(ffmpeg::codec::capabilities::Capabilities::VARIABLE_FRAME_SIZE)
+        && !codec.capabilities().contains(ffmpeg::codec::capabilities::Capabilities::VARIABLE_FRAME_SIZE)
     {
-        filter
-            .get("out")
-            .unwrap()
-            .sink()
-            .set_frame_size(encoder.frame_size());
+        filter.get("out").unwrap().sink().set_frame_size(encoder.frame_size());
     }
 
     Ok(filter)
@@ -61,25 +43,12 @@ struct Transcoder {
     out_time_base: ffmpeg::Rational,
 }
 
-fn transcoder<P: AsRef<Path> + ?Sized>(
-    ictx: &mut format::context::Input,
-    octx: &mut format::context::Output,
-    path: &P,
-    filter_spec: &str,
-) -> Result<Transcoder, ffmpeg::Error> {
-    let input = ictx
-        .streams()
-        .best(media::Type::Audio)
-        .expect("could not find best audio stream");
+fn transcoder<P: AsRef<Path> + ?Sized>(ictx: &mut format::context::Input, octx: &mut format::context::Output, path: &P, filter_spec: &str) -> Result<Transcoder, ffmpeg::Error> {
+    let input = ictx.streams().best(media::Type::Audio).expect("could not find best audio stream");
     let context = ffmpeg::codec::context::Context::from_parameters(input.parameters())?;
     let mut decoder = context.decoder().audio()?;
-    let codec = ffmpeg::encoder::find(octx.format().codec(path, media::Type::Audio))
-        .expect("failed to find encoder")
-        .audio()?;
-    let global = octx
-        .format()
-        .flags()
-        .contains(ffmpeg::format::flag::Flags::GLOBAL_HEADER);
+    let codec = ffmpeg::encoder::find(octx.format().codec(path, media::Type::Audio)).expect("failed to find encoder").audio()?;
+    let global = octx.format().flags().contains(ffmpeg::format::flag::Flags::GLOBAL_HEADER);
 
     decoder.set_parameters(input.parameters())?;
 
@@ -87,10 +56,7 @@ fn transcoder<P: AsRef<Path> + ?Sized>(
     let context = ffmpeg::codec::context::Context::from_parameters(output.parameters())?;
     let mut encoder = context.encoder().audio()?;
 
-    let channel_layout = codec
-        .channel_layouts()
-        .map(|cls| cls.best(decoder.channel_layout().channels()))
-        .unwrap_or(ffmpeg::channel_layout::ChannelLayout::STEREO);
+    let channel_layout = codec.channel_layouts().map(|cls| cls.best(decoder.channel_layout().channels())).unwrap_or(ffmpeg::channel_layout::ChannelLayout::STEREO);
 
     if global {
         encoder.set_flags(ffmpeg::codec::flag::Flags::GLOBAL_HEADER);
@@ -102,13 +68,7 @@ fn transcoder<P: AsRef<Path> + ?Sized>(
     {
         encoder.set_channels(channel_layout.channels());
     }
-    encoder.set_format(
-        codec
-            .formats()
-            .expect("unknown supported formats")
-            .next()
-            .unwrap(),
-    );
+    encoder.set_format(codec.formats().expect("unknown supported formats").next().unwrap());
     encoder.set_bit_rate(decoder.bit_rate());
     encoder.set_max_bit_rate(decoder.max_bit_rate());
 
@@ -123,14 +83,7 @@ fn transcoder<P: AsRef<Path> + ?Sized>(
     let in_time_base = decoder.time_base();
     let out_time_base = output.time_base();
 
-    Ok(Transcoder {
-        stream: input.index(),
-        filter,
-        decoder,
-        encoder,
-        in_time_base,
-        out_time_base,
-    })
+    Ok(Transcoder { stream: input.index(), filter, decoder, encoder, in_time_base, out_time_base })
 }
 
 impl Transcoder {
@@ -161,14 +114,7 @@ impl Transcoder {
 
     fn get_and_process_filtered_frames(&mut self, octx: &mut format::context::Output) {
         let mut filtered = frame::Audio::empty();
-        while self
-            .filter
-            .get("out")
-            .unwrap()
-            .sink()
-            .frame(&mut filtered)
-            .is_ok()
-        {
+        while self.filter.get("out").unwrap().sink().frame(&mut filtered).is_ok() {
             self.send_frame_to_encoder(&filtered);
             self.receive_and_process_encoded_packets(octx);
         }

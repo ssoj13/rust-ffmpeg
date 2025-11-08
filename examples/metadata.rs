@@ -23,20 +23,14 @@ fn main() -> Result<(), ffmpeg::Error> {
                 println!("Best subtitle stream index: {}", stream.index());
             }
 
-            println!(
-                "duration (seconds): {:.2}",
-                context.duration() as f64 / f64::from(ffmpeg::ffi::AV_TIME_BASE)
-            );
+            println!("duration (seconds): {:.2}", context.duration() as f64 / f64::from(ffmpeg::ffi::AV_TIME_BASE));
 
             for stream in context.streams() {
                 println!("stream index {}:", stream.index());
                 println!("\ttime_base: {}", stream.time_base());
                 println!("\tstart_time: {}", stream.start_time());
                 println!("\tduration (stream timebase): {}", stream.duration());
-                println!(
-                    "\tduration (seconds): {:.2}",
-                    stream.duration() as f64 * f64::from(stream.time_base())
-                );
+                println!("\tduration (seconds): {:.2}", stream.duration() as f64 * f64::from(stream.time_base()));
                 println!("\tframes: {}", stream.frames());
                 println!("\tdisposition: {:?}", stream.disposition());
                 println!("\tdiscard: {:?}", stream.discard());
@@ -59,16 +53,14 @@ fn main() -> Result<(), ffmpeg::Error> {
                         println!("\tvideo.color_space: {:?}", video.color_space());
                         println!("\tvideo.color_range: {:?}", video.color_range());
                         println!("\tvideo.color_primaries: {:?}", video.color_primaries());
-                        println!(
-                            "\tvideo.color_transfer_characteristic: {:?}",
-                            video.color_transfer_characteristic()
-                        );
+                        println!("\tvideo.color_transfer_characteristic: {:?}", video.color_transfer_characteristic());
                         println!("\tvideo.chroma_location: {:?}", video.chroma_location());
                         println!("\tvideo.references: {}", video.references());
                         println!("\tvideo.intra_dc_precision: {}", video.intra_dc_precision());
                     }
                 } else if codec.medium() == ffmpeg::media::Type::Audio
-                    && let Ok(audio) = codec.decoder().audio() {
+                    && let Ok(audio) = codec.decoder().audio()
+                {
                     println!("\tbit_rate: {}", audio.bit_rate());
                     println!("\tmax_rate: {}", audio.max_bit_rate());
                     println!("\tdelay: {}", audio.delay());

@@ -11,25 +11,16 @@ pub struct Config {
 
 impl Config {
     pub fn kind(value: Type) -> Self {
-        Config {
-            kind: value,
-            ..Default::default()
-        }
+        Config { kind: value, ..Default::default() }
     }
 
     pub fn count(value: usize) -> Self {
-        Config {
-            count: value,
-            ..Default::default()
-        }
+        Config { count: value, ..Default::default() }
     }
 
     #[cfg(not(feature = "ffmpeg_6_0"))]
     pub fn safe(value: bool) -> Self {
-        Config {
-            safe: value,
-            ..Default::default()
-        }
+        Config { safe: value, ..Default::default() }
     }
 }
 

@@ -1,6 +1,4 @@
-use std::ffi::CStr;
-use std::marker::PhantomData;
-use std::str::from_utf8_unchecked;
+use std::{ffi::CStr, marker::PhantomData, str::from_utf8_unchecked};
 
 use super::{Flags, Type};
 use crate::ffi::*;
@@ -55,10 +53,7 @@ pub struct Bitmap<'a> {
 
 impl<'a> Bitmap<'a> {
     pub unsafe fn wrap(ptr: *const AVSubtitleRect) -> Self {
-        Bitmap {
-            ptr,
-            _marker: PhantomData,
-        }
+        Bitmap { ptr, _marker: PhantomData }
     }
 
     pub unsafe fn as_ptr(&self) -> *const AVSubtitleRect {
@@ -90,14 +85,7 @@ impl<'a> Bitmap<'a> {
     // XXX: must split Picture and PictureMut
     #[cfg(not(feature = "ffmpeg_5_0"))]
     pub fn picture(&self, format: format::Pixel) -> Picture<'a> {
-        unsafe {
-            Picture::wrap(
-                &(*self.as_ptr()).pict as *const _ as *mut _,
-                format,
-                (*self.as_ptr()).w as u32,
-                (*self.as_ptr()).h as u32,
-            )
-        }
+        unsafe { Picture::wrap(&(*self.as_ptr()).pict as *const _ as *mut _, format, (*self.as_ptr()).w as u32, (*self.as_ptr()).h as u32) }
     }
 }
 
@@ -109,10 +97,7 @@ pub struct Text<'a> {
 
 impl<'a> Text<'a> {
     pub unsafe fn wrap(ptr: *const AVSubtitleRect) -> Self {
-        Text {
-            ptr,
-            _marker: PhantomData,
-        }
+        Text { ptr, _marker: PhantomData }
     }
 
     pub unsafe fn as_ptr(&self) -> *const AVSubtitleRect {
@@ -134,10 +119,7 @@ pub struct Ass<'a> {
 
 impl<'a> Ass<'a> {
     pub unsafe fn wrap(ptr: *const AVSubtitleRect) -> Self {
-        Ass {
-            ptr,
-            _marker: PhantomData,
-        }
+        Ass { ptr, _marker: PhantomData }
     }
 
     pub unsafe fn as_ptr(&self) -> *const AVSubtitleRect {

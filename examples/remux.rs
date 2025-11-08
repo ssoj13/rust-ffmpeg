@@ -2,7 +2,7 @@ extern crate ffmpeg_next as ffmpeg;
 
 use std::env;
 
-use ffmpeg::{codec, encoder, format, log, media, Rational};
+use ffmpeg::{Rational, codec, encoder, format, log, media};
 
 fn main() {
     let input_file = env::args().nth(1).expect("missing input file");
@@ -19,10 +19,7 @@ fn main() {
     let mut ost_index = 0;
     for (ist_index, ist) in ictx.streams().enumerate() {
         let ist_medium = ist.parameters().medium();
-        if ist_medium != media::Type::Audio
-            && ist_medium != media::Type::Video
-            && ist_medium != media::Type::Subtitle
-        {
+        if ist_medium != media::Type::Audio && ist_medium != media::Type::Video && ist_medium != media::Type::Subtitle {
             stream_mapping[ist_index] = -1;
             continue;
         }

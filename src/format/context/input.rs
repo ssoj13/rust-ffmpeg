@@ -1,14 +1,13 @@
-use std::ffi::CString;
-use std::mem;
-use std::ops::{Deref, DerefMut};
+use std::{
+    ffi::CString,
+    mem,
+    ops::{Deref, DerefMut},
+};
 
-use super::common::Context;
-use super::destructor;
-use crate::ffi::*;
-use crate::util::range::Range;
+use super::{common::Context, destructor};
 #[cfg(not(feature = "ffmpeg_5_0"))]
 use crate::Codec;
-use {crate::format, crate::Error, crate::Packet, crate::Stream};
+use crate::{Error, Packet, Stream, ffi::*, format, util::range::Range};
 
 pub struct Input {
     ptr: *mut AVFormatContext,
@@ -19,10 +18,7 @@ unsafe impl Send for Input {}
 
 impl Input {
     pub unsafe fn wrap(ptr: *mut AVFormatContext) -> Self {
-        Input {
-            ptr,
-            ctx: unsafe { Context::wrap(ptr, destructor::Mode::Input) },
-        }
+        Input { ptr, ctx: unsafe { Context::wrap(ptr, destructor::Mode::Input) } }
     }
 
     pub unsafe fn as_ptr(&self) -> *const AVFormatContext {
@@ -48,11 +44,7 @@ impl Input {
         unsafe {
             let ptr = (*self.as_ptr()).video_codec;
 
-            if ptr.is_null() {
-                None
-            } else {
-                Some(Codec::wrap(ptr))
-            }
+            if ptr.is_null() { None } else { Some(Codec::wrap(ptr)) }
         }
     }
 
@@ -61,11 +53,7 @@ impl Input {
         unsafe {
             let ptr = (*self.as_ptr()).audio_codec;
 
-            if ptr.is_null() {
-                None
-            } else {
-                Some(Codec::wrap(ptr))
-            }
+            if ptr.is_null() { None } else { Some(Codec::wrap(ptr)) }
         }
     }
 
@@ -74,11 +62,7 @@ impl Input {
         unsafe {
             let ptr = (*self.as_ptr()).subtitle_codec;
 
-            if ptr.is_null() {
-                None
-            } else {
-                Some(Codec::wrap(ptr))
-            }
+            if ptr.is_null() { None } else { Some(Codec::wrap(ptr)) }
         }
     }
 
@@ -87,11 +71,7 @@ impl Input {
         unsafe {
             let ptr = (*self.as_ptr()).data_codec;
 
-            if ptr.is_null() {
-                None
-            } else {
-                Some(Codec::wrap(ptr))
-            }
+            if ptr.is_null() { None } else { Some(Codec::wrap(ptr)) }
         }
     }
 
@@ -123,14 +103,7 @@ impl Input {
 
     pub fn seek<R: Range<i64>>(&mut self, ts: i64, range: R) -> Result<(), Error> {
         unsafe {
-            match avformat_seek_file(
-                self.as_mut_ptr(),
-                -1,
-                range.start().cloned().unwrap_or(i64::MIN),
-                ts,
-                range.end().cloned().unwrap_or(i64::MAX),
-                0,
-            ) {
+            match avformat_seek_file(self.as_mut_ptr(), -1, range.start().cloned().unwrap_or(i64::MIN), ts, range.end().cloned().unwrap_or(i64::MAX), 0) {
                 s if s >= 0 => Ok(()),
                 e => Err(Error::from(e)),
             }
@@ -171,10 +144,7 @@ impl<'a> Iterator for PacketIter<'a> {
         loop {
             match packet.read(self.context) {
                 Ok(..) => unsafe {
-                    return Some((
-                        Stream::wrap(mem::transmute_copy(&self.context), packet.stream()),
-                        packet,
-                    ));
+                    return Some((Stream::wrap(mem::transmute_copy(&self.context), packet.stream()), packet));
                 },
 
                 Err(Error::Eof) => return None,
@@ -189,11 +159,6 @@ pub fn dump(ctx: &Input, index: i32, url: Option<&str>) {
     let url = url.map(|u| CString::new(u).unwrap());
 
     unsafe {
-        av_dump_format(
-            ctx.as_ptr() as *mut _,
-            index,
-            url.unwrap_or_else(|| CString::new("").unwrap()).as_ptr(),
-            0,
-        );
+        av_dump_format(ctx.as_ptr() as *mut _, index, url.unwrap_or_else(|| CString::new("").unwrap()).as_ptr(), 0);
     }
 }

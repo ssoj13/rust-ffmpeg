@@ -1,12 +1,13 @@
-use std::ops::{Deref, DerefMut};
-use std::ptr;
+use std::{
+    ops::{Deref, DerefMut},
+    ptr,
+};
 
 use crate::ffi::*;
 use libc::c_int;
 
 use super::{audio, subtitle, video};
-use crate::codec::Context;
-use {crate::media, crate::packet, crate::Error, crate::Frame};
+use crate::{Error, Frame, codec::Context, media, packet};
 
 pub struct Encoder(pub Context);
 

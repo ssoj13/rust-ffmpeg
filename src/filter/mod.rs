@@ -13,12 +13,14 @@ pub use self::context::{Context, Sink, Source};
 pub mod graph;
 pub use self::graph::Graph;
 
-use std::ffi::{CStr, CString};
-use std::str::from_utf8_unchecked;
+use std::{
+    ffi::{CStr, CString},
+    str::from_utf8_unchecked,
+};
 
-use crate::ffi::*;
 #[cfg(not(feature = "ffmpeg_5_0"))]
 use crate::Error;
+use crate::ffi::*;
 
 #[cfg(not(feature = "ffmpeg_5_0"))]
 pub fn register_all() {
@@ -54,11 +56,7 @@ pub fn find(name: &str) -> Option<Filter> {
         let name = CString::new(name).unwrap();
         let ptr = avfilter_get_by_name(name.as_ptr());
 
-        if ptr.is_null() {
-            None
-        } else {
-            Some(Filter::wrap(ptr as *mut _))
-        }
+        if ptr.is_null() { None } else { Some(Filter::wrap(ptr as *mut _)) }
     }
 }
 
@@ -70,14 +68,6 @@ mod tests {
     fn test_paditer() {
         #[cfg(not(feature = "ffmpeg_5_0"))]
         register_all();
-        assert_eq!(
-            find("overlay")
-                .unwrap()
-                .inputs()
-                .unwrap()
-                .map(|input| input.name().unwrap().to_string())
-                .collect::<Vec<_>>(),
-            vec!("main", "overlay")
-        );
+        assert_eq!(find("overlay").unwrap().inputs().unwrap().map(|input| input.name().unwrap().to_string()).collect::<Vec<_>>(), vec!("main", "overlay"));
     }
 }

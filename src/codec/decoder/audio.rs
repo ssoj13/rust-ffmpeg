@@ -6,13 +6,11 @@ use crate::ffi::*;
 use libc::c_int;
 
 use super::Opened;
-use crate::codec::Context;
 #[cfg(not(feature = "ffmpeg_5_0"))]
 use crate::frame;
-use crate::util::format;
+use crate::{AudioService, ChannelLayout, codec::Context, util::format};
 #[cfg(not(feature = "ffmpeg_5_0"))]
-use {crate::packet, crate::Error};
-use {crate::AudioService, crate::ChannelLayout};
+use {crate::Error, crate::packet};
 
 pub struct Audio(pub Opened);
 
@@ -23,20 +21,11 @@ impl Audio {
         consider switching to send_packet() and receive_frame()"
     )]
     #[cfg(not(feature = "ffmpeg_5_0"))]
-    pub fn decode<P: packet::Ref>(
-        &mut self,
-        packet: &P,
-        out: &mut frame::Audio,
-    ) -> Result<bool, Error> {
+    pub fn decode<P: packet::Ref>(&mut self, packet: &P, out: &mut frame::Audio) -> Result<bool, Error> {
         unsafe {
             let mut got: c_int = 0;
 
-            match avcodec_decode_audio4(
-                self.as_mut_ptr(),
-                out.as_mut_ptr(),
-                &mut got,
-                packet.as_ptr(),
-            ) {
+            match avcodec_decode_audio4(self.as_mut_ptr(), out.as_mut_ptr(), &mut got, packet.as_ptr()) {
                 e if e < 0 => Err(Error::from(e)),
                 _ => Ok(got != 0),
             }

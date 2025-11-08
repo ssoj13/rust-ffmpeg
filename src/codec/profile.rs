@@ -220,20 +220,14 @@ impl From<(Id, c_int)> for Profile {
                 FF_PROFILE_MPEG4_MAIN => Profile::MPEG4(MPEG4::Main),
                 FF_PROFILE_MPEG4_N_BIT => Profile::MPEG4(MPEG4::NBit),
                 FF_PROFILE_MPEG4_SCALABLE_TEXTURE => Profile::MPEG4(MPEG4::ScalableTexture),
-                FF_PROFILE_MPEG4_SIMPLE_FACE_ANIMATION => {
-                    Profile::MPEG4(MPEG4::SimpleFaceAnimation)
-                }
-                FF_PROFILE_MPEG4_BASIC_ANIMATED_TEXTURE => {
-                    Profile::MPEG4(MPEG4::BasicAnimatedTexture)
-                }
+                FF_PROFILE_MPEG4_SIMPLE_FACE_ANIMATION => Profile::MPEG4(MPEG4::SimpleFaceAnimation),
+                FF_PROFILE_MPEG4_BASIC_ANIMATED_TEXTURE => Profile::MPEG4(MPEG4::BasicAnimatedTexture),
                 FF_PROFILE_MPEG4_HYBRID => Profile::MPEG4(MPEG4::Hybrid),
                 FF_PROFILE_MPEG4_ADVANCED_REAL_TIME => Profile::MPEG4(MPEG4::AdvancedRealTime),
                 FF_PROFILE_MPEG4_CORE_SCALABLE => Profile::MPEG4(MPEG4::CoreScalable),
                 FF_PROFILE_MPEG4_ADVANCED_CODING => Profile::MPEG4(MPEG4::AdvancedCoding),
                 FF_PROFILE_MPEG4_ADVANCED_CORE => Profile::MPEG4(MPEG4::AdvancedCore),
-                FF_PROFILE_MPEG4_ADVANCED_SCALABLE_TEXTURE => {
-                    Profile::MPEG4(MPEG4::AdvancedScalableTexture)
-                }
+                FF_PROFILE_MPEG4_ADVANCED_SCALABLE_TEXTURE => Profile::MPEG4(MPEG4::AdvancedScalableTexture),
                 FF_PROFILE_MPEG4_SIMPLE_STUDIO => Profile::MPEG4(MPEG4::SimpleStudio),
                 FF_PROFILE_MPEG4_ADVANCED_SIMPLE => Profile::MPEG4(MPEG4::AdvancedSimple),
 
@@ -241,15 +235,9 @@ impl From<(Id, c_int)> for Profile {
             },
 
             Id::JPEG2000 => match value {
-                FF_PROFILE_JPEG2000_CSTREAM_RESTRICTION_0 => {
-                    Profile::JPEG2000(JPEG2000::CStreamRestriction0)
-                }
-                FF_PROFILE_JPEG2000_CSTREAM_RESTRICTION_1 => {
-                    Profile::JPEG2000(JPEG2000::CStreamRestriction1)
-                }
-                FF_PROFILE_JPEG2000_CSTREAM_NO_RESTRICTION => {
-                    Profile::JPEG2000(JPEG2000::CStreamNoRestriction)
-                }
+                FF_PROFILE_JPEG2000_CSTREAM_RESTRICTION_0 => Profile::JPEG2000(JPEG2000::CStreamRestriction0),
+                FF_PROFILE_JPEG2000_CSTREAM_RESTRICTION_1 => Profile::JPEG2000(JPEG2000::CStreamRestriction1),
+                FF_PROFILE_JPEG2000_CSTREAM_NO_RESTRICTION => Profile::JPEG2000(JPEG2000::CStreamNoRestriction),
                 FF_PROFILE_JPEG2000_DCINEMA_2K => Profile::JPEG2000(JPEG2000::DCinema2K),
                 FF_PROFILE_JPEG2000_DCINEMA_4K => Profile::JPEG2000(JPEG2000::DCinema4K),
 
@@ -345,21 +333,13 @@ impl From<Profile> for c_int {
             Profile::MPEG4(MPEG4::CoreScalable) => FF_PROFILE_MPEG4_CORE_SCALABLE,
             Profile::MPEG4(MPEG4::AdvancedCoding) => FF_PROFILE_MPEG4_ADVANCED_CODING,
             Profile::MPEG4(MPEG4::AdvancedCore) => FF_PROFILE_MPEG4_ADVANCED_CORE,
-            Profile::MPEG4(MPEG4::AdvancedScalableTexture) => {
-                FF_PROFILE_MPEG4_ADVANCED_SCALABLE_TEXTURE
-            }
+            Profile::MPEG4(MPEG4::AdvancedScalableTexture) => FF_PROFILE_MPEG4_ADVANCED_SCALABLE_TEXTURE,
             Profile::MPEG4(MPEG4::SimpleStudio) => FF_PROFILE_MPEG4_SIMPLE_STUDIO,
             Profile::MPEG4(MPEG4::AdvancedSimple) => FF_PROFILE_MPEG4_ADVANCED_SIMPLE,
 
-            Profile::JPEG2000(JPEG2000::CStreamRestriction0) => {
-                FF_PROFILE_JPEG2000_CSTREAM_RESTRICTION_0
-            }
-            Profile::JPEG2000(JPEG2000::CStreamRestriction1) => {
-                FF_PROFILE_JPEG2000_CSTREAM_RESTRICTION_1
-            }
-            Profile::JPEG2000(JPEG2000::CStreamNoRestriction) => {
-                FF_PROFILE_JPEG2000_CSTREAM_NO_RESTRICTION
-            }
+            Profile::JPEG2000(JPEG2000::CStreamRestriction0) => FF_PROFILE_JPEG2000_CSTREAM_RESTRICTION_0,
+            Profile::JPEG2000(JPEG2000::CStreamRestriction1) => FF_PROFILE_JPEG2000_CSTREAM_RESTRICTION_1,
+            Profile::JPEG2000(JPEG2000::CStreamNoRestriction) => FF_PROFILE_JPEG2000_CSTREAM_NO_RESTRICTION,
             Profile::JPEG2000(JPEG2000::DCinema2K) => FF_PROFILE_JPEG2000_DCINEMA_2K,
             Profile::JPEG2000(JPEG2000::DCinema4K) => FF_PROFILE_JPEG2000_DCINEMA_4K,
 

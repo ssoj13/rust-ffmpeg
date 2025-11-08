@@ -1,9 +1,7 @@
-use std::ffi::CStr;
-use std::str::from_utf8_unchecked;
+use std::{ffi::CStr, str::from_utf8_unchecked};
 
 use super::{Audio, Capabilities, Id, Profile, Video};
-use crate::ffi::*;
-use {crate::media, crate::Error};
+use crate::{Error, ffi::*, media};
 
 #[derive(PartialEq, Eq, Copy, Clone)]
 pub struct Codec {
@@ -39,11 +37,7 @@ impl Codec {
     pub fn description(&self) -> &str {
         unsafe {
             let long_name = (*self.as_ptr()).long_name;
-            if long_name.is_null() {
-                ""
-            } else {
-                from_utf8_unchecked(CStr::from_ptr(long_name).to_bytes())
-            }
+            if long_name.is_null() { "" } else { from_utf8_unchecked(CStr::from_ptr(long_name).to_bytes()) }
         }
     }
 
@@ -60,13 +54,7 @@ impl Codec {
     }
 
     pub fn video(self) -> Result<Video, Error> {
-        unsafe {
-            if self.medium() == media::Type::Video {
-                Ok(Video::new(self))
-            } else {
-                Err(Error::InvalidData)
-            }
-        }
+        unsafe { if self.medium() == media::Type::Video { Ok(Video::new(self)) } else { Err(Error::InvalidData) } }
     }
 
     pub fn is_audio(&self) -> bool {
@@ -74,13 +62,7 @@ impl Codec {
     }
 
     pub fn audio(self) -> Result<Audio, Error> {
-        unsafe {
-            if self.medium() == media::Type::Audio {
-                Ok(Audio::new(self))
-            } else {
-                Err(Error::InvalidData)
-            }
-        }
+        unsafe { if self.medium() == media::Type::Audio { Ok(Audio::new(self)) } else { Err(Error::InvalidData) } }
     }
 
     pub fn max_lowres(&self) -> i32 {
@@ -92,13 +74,7 @@ impl Codec {
     }
 
     pub fn profiles(&self) -> Option<ProfileIter> {
-        unsafe {
-            if (*self.as_ptr()).profiles.is_null() {
-                None
-            } else {
-                Some(ProfileIter::new(self.id(), (*self.as_ptr()).profiles))
-            }
-        }
+        unsafe { if (*self.as_ptr()).profiles.is_null() { None } else { Some(ProfileIter::new(self.id(), (*self.as_ptr()).profiles)) } }
     }
 }
 

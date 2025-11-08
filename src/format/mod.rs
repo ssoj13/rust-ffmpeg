@@ -1,5 +1,4 @@
-pub use crate::util::format::{pixel, Pixel};
-pub use crate::util::format::{sample, Sample};
+pub use crate::util::format::{Pixel, Sample, pixel, sample};
 use crate::util::interrupt;
 
 pub mod stream;
@@ -12,18 +11,18 @@ pub use self::context::Context;
 pub mod format;
 #[cfg(not(feature = "ffmpeg_5_0"))]
 pub use self::format::list;
-pub use self::format::{flag, Flags};
-pub use self::format::{Input, Output};
+pub use self::format::{Flags, Input, Output, flag};
 
 pub mod network;
 
-use std::ffi::{CStr, CString};
-use std::path::Path;
-use std::ptr;
-use std::str::from_utf8_unchecked;
+use std::{
+    ffi::{CStr, CString},
+    path::Path,
+    ptr,
+    str::from_utf8_unchecked,
+};
 
-use crate::ffi::*;
-use {crate::Dictionary, crate::Error, crate::Format};
+use crate::{Dictionary, Error, Format, ffi::*};
 
 #[cfg(not(feature = "ffmpeg_5_0"))]
 pub fn register_all() {
@@ -69,12 +68,7 @@ pub fn open<P: AsRef<Path> + ?Sized>(path: &P, format: &Format) -> Result<Contex
         let path = from_path(path);
 
         match *format {
-            Format::Input(ref format) => match avformat_open_input(
-                &mut ps,
-                path.as_ptr(),
-                format.as_ptr() as *mut _,
-                ptr::null_mut(),
-            ) {
+            Format::Input(ref format) => match avformat_open_input(&mut ps, path.as_ptr(), format.as_ptr() as *mut _, ptr::null_mut()) {
                 0 => match avformat_find_stream_info(ps, ptr::null_mut()) {
                     r if r >= 0 => Ok(Context::Input(context::Input::wrap(ps))),
                     e => Err(Error::from(e)),
@@ -83,12 +77,7 @@ pub fn open<P: AsRef<Path> + ?Sized>(path: &P, format: &Format) -> Result<Contex
                 e => Err(Error::from(e)),
             },
 
-            Format::Output(ref format) => match avformat_alloc_output_context2(
-                &mut ps,
-                format.as_ptr() as *mut _,
-                ptr::null(),
-                path.as_ptr(),
-            ) {
+            Format::Output(ref format) => match avformat_alloc_output_context2(&mut ps, format.as_ptr() as *mut _, ptr::null(), path.as_ptr()) {
                 0 => match avio_open(&mut (*ps).pb, path.as_ptr(), AVIO_FLAG_WRITE) {
                     0 => Ok(Context::Output(context::Output::wrap(ps))),
                     e => Err(Error::from(e)),
@@ -100,11 +89,7 @@ pub fn open<P: AsRef<Path> + ?Sized>(path: &P, format: &Format) -> Result<Contex
     }
 }
 
-pub fn open_with<P: AsRef<Path> + ?Sized>(
-    path: &P,
-    format: &Format,
-    options: Dictionary,
-) -> Result<Context, Error> {
+pub fn open_with<P: AsRef<Path> + ?Sized>(path: &P, format: &Format, options: Dictionary) -> Result<Context, Error> {
     unsafe {
         let mut ps = ptr::null_mut();
         let path = from_path(path);
@@ -112,12 +97,7 @@ pub fn open_with<P: AsRef<Path> + ?Sized>(
 
         match *format {
             Format::Input(ref format) => {
-                let res = avformat_open_input(
-                    &mut ps,
-                    path.as_ptr(),
-                    format.as_ptr() as *mut _,
-                    &mut opts,
-                );
+                let res = avformat_open_input(&mut ps, path.as_ptr(), format.as_ptr() as *mut _, &mut opts);
 
                 Dictionary::own(opts);
 
@@ -131,12 +111,7 @@ pub fn open_with<P: AsRef<Path> + ?Sized>(
                 }
             }
 
-            Format::Output(ref format) => match avformat_alloc_output_context2(
-                &mut ps,
-                format.as_ptr() as *mut _,
-                ptr::null(),
-                path.as_ptr(),
-            ) {
+            Format::Output(ref format) => match avformat_alloc_output_context2(&mut ps, format.as_ptr() as *mut _, ptr::null(), path.as_ptr()) {
                 0 => match avio_open(&mut (*ps).pb, path.as_ptr(), AVIO_FLAG_WRITE) {
                     0 => Ok(Context::Output(context::Output::wrap(ps))),
                     e => Err(Error::from(e)),
@@ -167,10 +142,7 @@ pub fn input<P: AsRef<Path> + ?Sized>(path: &P) -> Result<context::Input, Error>
     }
 }
 
-pub fn input_with_dictionary<P: AsRef<Path> + ?Sized>(
-    path: &P,
-    options: Dictionary,
-) -> Result<context::Input, Error> {
+pub fn input_with_dictionary<P: AsRef<Path> + ?Sized>(path: &P, options: Dictionary) -> Result<context::Input, Error> {
     unsafe {
         let mut ps = ptr::null_mut();
         let path = from_path(path);
@@ -193,10 +165,7 @@ pub fn input_with_dictionary<P: AsRef<Path> + ?Sized>(
     }
 }
 
-pub fn input_with_interrupt<P: AsRef<Path> + ?Sized, F>(
-    path: &P,
-    closure: F,
-) -> Result<context::Input, Error>
+pub fn input_with_interrupt<P: AsRef<Path> + ?Sized, F>(path: &P, closure: F) -> Result<context::Input, Error>
 where
     F: FnMut() -> bool,
 {
@@ -235,10 +204,7 @@ pub fn output<P: AsRef<Path> + ?Sized>(path: &P) -> Result<context::Output, Erro
     }
 }
 
-pub fn output_with<P: AsRef<Path> + ?Sized>(
-    path: &P,
-    options: Dictionary,
-) -> Result<context::Output, Error> {
+pub fn output_with<P: AsRef<Path> + ?Sized>(path: &P, options: Dictionary) -> Result<context::Output, Error> {
     unsafe {
         let mut ps = ptr::null_mut();
         let path = from_path(path);
@@ -246,13 +212,7 @@ pub fn output_with<P: AsRef<Path> + ?Sized>(
 
         match avformat_alloc_output_context2(&mut ps, ptr::null_mut(), ptr::null(), path.as_ptr()) {
             0 => {
-                let res = avio_open2(
-                    &mut (*ps).pb,
-                    path.as_ptr(),
-                    AVIO_FLAG_WRITE,
-                    ptr::null(),
-                    &mut opts,
-                );
+                let res = avio_open2(&mut (*ps).pb, path.as_ptr(), AVIO_FLAG_WRITE, ptr::null(), &mut opts);
 
                 Dictionary::own(opts);
 
@@ -267,21 +227,13 @@ pub fn output_with<P: AsRef<Path> + ?Sized>(
     }
 }
 
-pub fn output_as<P: AsRef<Path> + ?Sized>(
-    path: &P,
-    format: &str,
-) -> Result<context::Output, Error> {
+pub fn output_as<P: AsRef<Path> + ?Sized>(path: &P, format: &str) -> Result<context::Output, Error> {
     unsafe {
         let mut ps = ptr::null_mut();
         let path = from_path(path);
         let format = CString::new(format).unwrap();
 
-        match avformat_alloc_output_context2(
-            &mut ps,
-            ptr::null_mut(),
-            format.as_ptr(),
-            path.as_ptr(),
-        ) {
+        match avformat_alloc_output_context2(&mut ps, ptr::null_mut(), format.as_ptr(), path.as_ptr()) {
             0 => match avio_open(&mut (*ps).pb, path.as_ptr(), AVIO_FLAG_WRITE) {
                 0 => Ok(context::Output::wrap(ps)),
                 e => Err(Error::from(e)),
@@ -292,31 +244,16 @@ pub fn output_as<P: AsRef<Path> + ?Sized>(
     }
 }
 
-pub fn output_as_with<P: AsRef<Path> + ?Sized>(
-    path: &P,
-    format: &str,
-    options: Dictionary,
-) -> Result<context::Output, Error> {
+pub fn output_as_with<P: AsRef<Path> + ?Sized>(path: &P, format: &str, options: Dictionary) -> Result<context::Output, Error> {
     unsafe {
         let mut ps = ptr::null_mut();
         let path = from_path(path);
         let format = CString::new(format).unwrap();
         let mut opts = options.disown();
 
-        match avformat_alloc_output_context2(
-            &mut ps,
-            ptr::null_mut(),
-            format.as_ptr(),
-            path.as_ptr(),
-        ) {
+        match avformat_alloc_output_context2(&mut ps, ptr::null_mut(), format.as_ptr(), path.as_ptr()) {
             0 => {
-                let res = avio_open2(
-                    &mut (*ps).pb,
-                    path.as_ptr(),
-                    AVIO_FLAG_WRITE,
-                    ptr::null(),
-                    &mut opts,
-                );
+                let res = avio_open2(&mut (*ps).pb, path.as_ptr(), AVIO_FLAG_WRITE, ptr::null(), &mut opts);
 
                 Dictionary::own(opts);
 

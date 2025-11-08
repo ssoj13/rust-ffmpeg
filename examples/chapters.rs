@@ -28,13 +28,7 @@ fn main() {
                     None => String::new(),
                 };
 
-                match octx.add_chapter(
-                    chapter.id(),
-                    chapter.time_base(),
-                    chapter.start(),
-                    chapter.end(),
-                    &title,
-                ) {
+                match octx.add_chapter(chapter.id(), chapter.time_base(), chapter.start(), chapter.end(), &title) {
                     Ok(chapter) => println!("Added chapter with id {} to output", chapter.id()),
                     Err(error) => {
                         println!("Error adding chapter with id: {} - {}", chapter.id(), error)

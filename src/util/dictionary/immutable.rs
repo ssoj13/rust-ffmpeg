@@ -1,8 +1,10 @@
-use std::ffi::{CStr, CString};
-use std::fmt;
-use std::marker::PhantomData;
-use std::ptr;
-use std::str::from_utf8_unchecked;
+use std::{
+    ffi::{CStr, CString},
+    fmt,
+    marker::PhantomData,
+    ptr,
+    str::from_utf8_unchecked,
+};
 
 use super::{Iter, Owned};
 use crate::ffi::*;
@@ -15,10 +17,7 @@ pub struct Ref<'a> {
 
 impl<'a> Ref<'a> {
     pub unsafe fn wrap(ptr: *const AVDictionary) -> Self {
-        Ref {
-            ptr,
-            _marker: PhantomData,
-        }
+        Ref { ptr, _marker: PhantomData }
     }
 
     pub unsafe fn as_ptr(&self) -> *const AVDictionary {
@@ -32,13 +31,7 @@ impl<'a> Ref<'a> {
             let key = CString::new(key).unwrap();
             let entry = av_dict_get(self.as_ptr(), key.as_ptr(), ptr::null_mut(), 0);
 
-            if entry.is_null() {
-                None
-            } else {
-                Some(from_utf8_unchecked(
-                    CStr::from_ptr((*entry).value).to_bytes(),
-                ))
-            }
+            if entry.is_null() { None } else { Some(from_utf8_unchecked(CStr::from_ptr((*entry).value).to_bytes())) }
         }
     }
 

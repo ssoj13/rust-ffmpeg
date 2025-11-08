@@ -1,11 +1,7 @@
-use std::marker::PhantomData;
-use std::ptr;
+use std::{marker::PhantomData, ptr};
 
-use crate::device;
-use crate::ffi::*;
-use crate::format::context::common::Context;
+use crate::{Error, device, ffi::*, format::context::common::Context};
 use libc::c_int;
-use crate::Error;
 
 impl Context {
     pub fn devices(&self) -> Result<DeviceIter<'_>, Error> {
@@ -27,11 +23,7 @@ impl<'a> DeviceIter<'a> {
         match unsafe { avdevice_list_devices(ctx as *mut _, &mut ptr) } {
             n if n < 0 => Err(Error::from(n)),
 
-            _ => Ok(DeviceIter {
-                ptr,
-                cur: 0,
-                _marker: PhantomData,
-            }),
+            _ => Ok(DeviceIter { ptr, cur: 0, _marker: PhantomData }),
         }
     }
 }
@@ -59,9 +51,7 @@ impl<'a> Iterator for DeviceIter<'a> {
                 None
             } else {
                 self.cur += 1;
-                Some(device::Info::wrap(
-                    *(*self.ptr).devices.offset((self.cur - 1) as isize),
-                ))
+                Some(device::Info::wrap(*(*self.ptr).devices.offset((self.cur - 1) as isize)))
             }
         }
     }

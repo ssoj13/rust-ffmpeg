@@ -10,8 +10,7 @@ pub use self::audio::Audio;
 pub mod flag;
 pub use self::flag::Flags;
 
-use crate::ffi::*;
-use {crate::Dictionary, crate::DictionaryRef};
+use crate::{Dictionary, DictionaryRef, ffi::*};
 
 #[derive(PartialEq, Eq, Copy, Clone, Debug)]
 pub struct Packet {
@@ -44,10 +43,7 @@ impl Frame {
 
     #[inline(always)]
     pub unsafe fn empty() -> Self {
-        Frame {
-            ptr: unsafe { av_frame_alloc() },
-            _own: true,
-        }
+        Frame { ptr: unsafe { av_frame_alloc() }, _own: true }
     }
 
     #[inline(always)]
@@ -157,11 +153,7 @@ impl Frame {
         unsafe {
             let ptr = av_frame_get_side_data(self.as_ptr(), kind.into());
 
-            if ptr.is_null() {
-                None
-            } else {
-                Some(SideData::wrap(ptr))
-            }
+            if ptr.is_null() { None } else { Some(SideData::wrap(ptr)) }
         }
     }
 
@@ -170,11 +162,7 @@ impl Frame {
         unsafe {
             let ptr = av_frame_new_side_data(self.as_mut_ptr(), kind.into(), size as _);
 
-            if ptr.is_null() {
-                None
-            } else {
-                Some(SideData::wrap(ptr))
-            }
+            if ptr.is_null() { None } else { Some(SideData::wrap(ptr)) }
         }
     }
 

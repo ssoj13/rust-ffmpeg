@@ -17,13 +17,9 @@
 
 extern crate ffmpeg_next as ffmpeg;
 
-use std::collections::HashMap;
-use std::env;
-use std::time::Instant;
+use std::{collections::HashMap, env, time::Instant};
 
-use ffmpeg::{
-    codec, decoder, encoder, format, frame, log, media, picture, Dictionary, Packet, Rational,
-};
+use ffmpeg::{Dictionary, Packet, Rational, codec, decoder, encoder, format, frame, log, media, picture};
 
 const DEFAULT_X264_OPTS: &str = "preset=medium";
 
@@ -40,25 +36,14 @@ struct Transcoder {
 }
 
 impl Transcoder {
-    fn new(
-        ist: &format::stream::Stream,
-        octx: &mut format::context::Output,
-        ost_index: usize,
-        x264_opts: Dictionary,
-        enable_logging: bool,
-    ) -> Result<Self, ffmpeg::Error> {
+    fn new(ist: &format::stream::Stream, octx: &mut format::context::Output, ost_index: usize, x264_opts: Dictionary, enable_logging: bool) -> Result<Self, ffmpeg::Error> {
         let global_header = octx.format().flags().contains(format::Flags::GLOBAL_HEADER);
-        let decoder = ffmpeg::codec::context::Context::from_parameters(ist.parameters())?
-            .decoder()
-            .video()?;
+        let decoder = ffmpeg::codec::context::Context::from_parameters(ist.parameters())?.decoder().video()?;
 
         let codec = encoder::find(codec::Id::H264);
         let mut ost = octx.add_stream(codec)?;
 
-        let mut encoder =
-            codec::context::Context::new_with_codec(codec.ok_or(ffmpeg::Error::InvalidData)?)
-                .encoder()
-                .video()?;
+        let mut encoder = codec::context::Context::new_with_codec(codec.ok_or(ffmpeg::Error::InvalidData)?).encoder().video()?;
         ost.set_parameters(&encoder);
         encoder.set_height(decoder.height());
         encoder.set_width(decoder.width());
@@ -71,21 +56,9 @@ impl Transcoder {
             encoder.set_flags(codec::Flags::GLOBAL_HEADER);
         }
 
-        let opened_encoder = encoder
-            .open_with(x264_opts)
-            .expect("error opening x264 with supplied settings");
+        let opened_encoder = encoder.open_with(x264_opts).expect("error opening x264 with supplied settings");
         ost.set_parameters(&opened_encoder);
-        Ok(Self {
-            ost_index,
-            decoder,
-            input_time_base: ist.time_base(),
-            encoder: opened_encoder,
-            logging_enabled: enable_logging,
-            frame_count: 0,
-            last_log_frame_count: 0,
-            starting_time: Instant::now(),
-            last_log_time: Instant::now(),
-        })
+        Ok(Self { ost_index, decoder, input_time_base: ist.time_base(), encoder: opened_encoder, logging_enabled: enable_logging, frame_count: 0, last_log_frame_count: 0, starting_time: Instant::now(), last_log_time: Instant::now() })
     }
 
     fn send_packet_to_decoder(&mut self, packet: &Packet) {
@@ -96,18 +69,12 @@ impl Transcoder {
         self.decoder.send_eof().unwrap();
     }
 
-    fn receive_and_process_decoded_frames(
-        &mut self,
-        octx: &mut format::context::Output,
-        ost_time_base: Rational,
-    ) {
+    fn receive_and_process_decoded_frames(&mut self, octx: &mut format::context::Output, ost_time_base: Rational) {
         let mut frame = frame::Video::empty();
         while self.decoder.receive_frame(&mut frame).is_ok() {
             self.frame_count += 1;
             let timestamp = frame.timestamp();
-            self.log_progress(f64::from(
-                Rational(timestamp.unwrap_or(0) as i32, 1) * self.input_time_base,
-            ));
+            self.log_progress(f64::from(Rational(timestamp.unwrap_or(0) as i32, 1) * self.input_time_base));
             frame.set_pts(timestamp);
             frame.set_kind(picture::Type::None);
             self.send_frame_to_encoder(&frame);
@@ -123,11 +90,7 @@ impl Transcoder {
         self.encoder.send_eof().unwrap();
     }
 
-    fn receive_and_process_encoded_packets(
-        &mut self,
-        octx: &mut format::context::Output,
-        ost_time_base: Rational,
-    ) {
+    fn receive_and_process_encoded_packets(&mut self, octx: &mut format::context::Output, ost_time_base: Rational) {
         let mut encoded = Packet::empty();
         while self.encoder.receive_packet(&mut encoded).is_ok() {
             encoded.set_stream(self.ost_index);
@@ -137,18 +100,10 @@ impl Transcoder {
     }
 
     fn log_progress(&mut self, timestamp: f64) {
-        if !self.logging_enabled
-            || (self.frame_count - self.last_log_frame_count < 100
-                && self.last_log_time.elapsed().as_secs_f64() < 1.0)
-        {
+        if !self.logging_enabled || (self.frame_count - self.last_log_frame_count < 100 && self.last_log_time.elapsed().as_secs_f64() < 1.0) {
             return;
         }
-        eprintln!(
-            "time elpased: \t{:8.2}\tframe count: {:8}\ttimestamp: {:8.2}",
-            self.starting_time.elapsed().as_secs_f64(),
-            self.frame_count,
-            timestamp
-        );
+        eprintln!("time elpased: \t{:8.2}\tframe count: {:8}\ttimestamp: {:8.2}", self.starting_time.elapsed().as_secs_f64(), self.frame_count, timestamp);
         self.last_log_frame_count = self.frame_count;
         self.last_log_time = Instant::now();
     }
@@ -169,12 +124,7 @@ fn parse_opts<'a>(s: String) -> Option<Dictionary<'a>> {
 fn main() {
     let input_file = env::args().nth(1).expect("missing input file");
     let output_file = env::args().nth(2).expect("missing output file");
-    let x264_opts = parse_opts(
-        env::args()
-            .nth(3)
-            .unwrap_or_else(|| DEFAULT_X264_OPTS.to_string()),
-    )
-    .expect("invalid x264 options string");
+    let x264_opts = parse_opts(env::args().nth(3).unwrap_or_else(|| DEFAULT_X264_OPTS.to_string())).expect("invalid x264 options string");
 
     eprintln!("x264 options: {:?}", x264_opts);
 
@@ -186,10 +136,7 @@ fn main() {
 
     format::context::input::dump(&ictx, 0, Some(&input_file));
 
-    let best_video_stream_index = ictx
-        .streams()
-        .best(media::Type::Video)
-        .map(|stream| stream.index());
+    let best_video_stream_index = ictx.streams().best(media::Type::Video).map(|stream| stream.index());
     let mut stream_mapping: Vec<isize> = vec![0; ictx.nb_streams() as _];
     let mut ist_time_bases = vec![Rational(0, 0); ictx.nb_streams() as _];
     let mut ost_time_bases = vec![Rational(0, 0); ictx.nb_streams() as _];
@@ -197,10 +144,7 @@ fn main() {
     let mut ost_index = 0;
     for (ist_index, ist) in ictx.streams().enumerate() {
         let ist_medium = ist.parameters().medium();
-        if ist_medium != media::Type::Audio
-            && ist_medium != media::Type::Video
-            && ist_medium != media::Type::Subtitle
-        {
+        if ist_medium != media::Type::Audio && ist_medium != media::Type::Video && ist_medium != media::Type::Subtitle {
             stream_mapping[ist_index] = -1;
             continue;
         }
@@ -208,17 +152,7 @@ fn main() {
         ist_time_bases[ist_index] = ist.time_base();
         if ist_medium == media::Type::Video {
             // Initialize transcoder for video stream.
-            transcoders.insert(
-                ist_index,
-                Transcoder::new(
-                    &ist,
-                    &mut octx,
-                    ost_index as _,
-                    x264_opts.to_owned(),
-                    Some(ist_index) == best_video_stream_index,
-                )
-                .unwrap(),
-            );
+            transcoders.insert(ist_index, Transcoder::new(&ist, &mut octx, ost_index as _, x264_opts.to_owned(), Some(ist_index) == best_video_stream_index).unwrap());
         } else {
             // Set up for stream copy for non-video stream.
             let mut ost = octx.add_stream(encoder::find(codec::Id::None)).unwrap();

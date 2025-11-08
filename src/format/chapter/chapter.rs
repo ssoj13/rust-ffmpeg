@@ -1,5 +1,4 @@
-use crate::ffi::*;
-use {crate::DictionaryRef, crate::Rational};
+use crate::{DictionaryRef, Rational, ffi::*};
 
 use crate::format::context::common::Context;
 

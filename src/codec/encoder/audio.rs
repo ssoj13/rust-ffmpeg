@@ -1,16 +1,22 @@
-use std::ops::{Deref, DerefMut};
-use std::ptr;
+use std::{
+    ops::{Deref, DerefMut},
+    ptr,
+};
 
 use crate::ffi::*;
 #[cfg(not(feature = "ffmpeg_5_0"))]
 use libc::c_int;
 
 use super::Encoder as Super;
-use crate::codec::{traits, Context};
-use crate::util::format;
+use crate::{
+    ChannelLayout,
+    Dictionary,
+    Error,
+    codec::{Context, traits},
+    util::format,
+};
 #[cfg(not(feature = "ffmpeg_5_0"))]
 use {crate::frame, crate::packet};
-use {crate::ChannelLayout, crate::Dictionary, crate::Error};
 
 pub struct Audio(pub Super);
 
@@ -51,11 +57,7 @@ impl Audio {
         }
     }
 
-    pub fn open_as_with<E: traits::Encoder>(
-        mut self,
-        codec: E,
-        options: Dictionary,
-    ) -> Result<Encoder, Error> {
+    pub fn open_as_with<E: traits::Encoder>(mut self, codec: E, options: Dictionary) -> Result<Encoder, Error> {
         unsafe {
             if let Some(codec) = codec.encoder() {
                 let mut opts = options.disown();
@@ -176,11 +178,7 @@ impl Encoder {
         consider switching to send_frame() and receive_packet()"
     )]
     #[cfg(not(feature = "ffmpeg_5_0"))]
-    pub fn encode<P: packet::Mut>(
-        &mut self,
-        frame: &frame::Audio,
-        out: &mut P,
-    ) -> Result<bool, Error> {
+    pub fn encode<P: packet::Mut>(&mut self, frame: &frame::Audio, out: &mut P) -> Result<bool, Error> {
         unsafe {
             if self.format() != frame.format() {
                 return Err(Error::InvalidData);
@@ -188,12 +186,7 @@ impl Encoder {
 
             let mut got: c_int = 0;
 
-            match avcodec_encode_audio2(
-                self.0.as_mut_ptr(),
-                out.as_mut_ptr(),
-                frame.as_ptr(),
-                &mut got,
-            ) {
+            match avcodec_encode_audio2(self.0.as_mut_ptr(), out.as_mut_ptr(), frame.as_ptr(), &mut got) {
                 e if e < 0 => Err(Error::from(e)),
                 _ => Ok(got != 0),
             }
@@ -210,12 +203,7 @@ impl Encoder {
         unsafe {
             let mut got: c_int = 0;
 
-            match avcodec_encode_audio2(
-                self.0.as_mut_ptr(),
-                out.as_mut_ptr(),
-                ptr::null(),
-                &mut got,
-            ) {
+            match avcodec_encode_audio2(self.0.as_mut_ptr(), out.as_mut_ptr(), ptr::null(), &mut got) {
                 e if e < 0 => Err(Error::from(e)),
                 _ => Ok(got != 0),
             }

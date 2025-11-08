@@ -16,27 +16,8 @@ impl Filter {
 }
 
 impl Filter {
-    pub fn get(
-        luma_g_blur: f32,
-        chroma_g_blur: f32,
-        luma_sharpen: f32,
-        chroma_sharpen: f32,
-        chroma_h_shift: f32,
-        chroma_v_shift: f32,
-    ) -> Self {
-        unsafe {
-            Filter {
-                ptr: sws_getDefaultFilter(
-                    luma_g_blur,
-                    chroma_g_blur,
-                    luma_sharpen,
-                    chroma_sharpen,
-                    chroma_h_shift,
-                    chroma_v_shift,
-                    0,
-                ),
-            }
-        }
+    pub fn get(luma_g_blur: f32, chroma_g_blur: f32, luma_sharpen: f32, chroma_sharpen: f32, chroma_h_shift: f32, chroma_v_shift: f32) -> Self {
+        unsafe { Filter { ptr: sws_getDefaultFilter(luma_g_blur, chroma_g_blur, luma_sharpen, chroma_sharpen, chroma_h_shift, chroma_v_shift, 0) } }
     }
 
     pub fn new() -> Self {

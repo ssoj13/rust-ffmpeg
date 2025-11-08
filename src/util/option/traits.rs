@@ -1,12 +1,9 @@
 //! NOTE: this will be much better once specialization comes
 
-use std::ffi::CString;
-use std::mem;
+use std::{ffi::CString, mem};
 
-use crate::ffi::*;
+use crate::{ChannelLayout, Error, Rational, ffi::*, util::format};
 use libc::{c_int, c_void};
-use crate::util::format;
-use {crate::ChannelLayout, crate::Error, crate::Rational};
 
 macro_rules! check {
     ($expr:expr) => {
@@ -27,13 +24,7 @@ pub trait Settable: Target {
         unsafe {
             let name = CString::new(name).unwrap();
 
-            check!(av_opt_set_bin(
-                self.as_mut_ptr(),
-                name.as_ptr(),
-                value as *const _ as *const _,
-                mem::size_of::<T>() as c_int,
-                AV_OPT_SEARCH_CHILDREN
-            ))
+            check!(av_opt_set_bin(self.as_mut_ptr(), name.as_ptr(), value as *const _ as *const _, mem::size_of::<T>() as c_int, AV_OPT_SEARCH_CHILDREN))
         }
     }
 
@@ -42,12 +33,7 @@ pub trait Settable: Target {
             let name = CString::new(name).unwrap();
             let value = CString::new(value).unwrap();
 
-            check!(av_opt_set(
-                self.as_mut_ptr(),
-                name.as_ptr(),
-                value.as_ptr(),
-                AV_OPT_SEARCH_CHILDREN
-            ))
+            check!(av_opt_set(self.as_mut_ptr(), name.as_ptr(), value.as_ptr(), AV_OPT_SEARCH_CHILDREN))
         }
     }
 
@@ -55,12 +41,7 @@ pub trait Settable: Target {
         unsafe {
             let name = CString::new(name).unwrap();
 
-            check!(av_opt_set_int(
-                self.as_mut_ptr(),
-                name.as_ptr(),
-                value,
-                AV_OPT_SEARCH_CHILDREN
-            ))
+            check!(av_opt_set_int(self.as_mut_ptr(), name.as_ptr(), value, AV_OPT_SEARCH_CHILDREN))
         }
     }
 
@@ -68,12 +49,7 @@ pub trait Settable: Target {
         unsafe {
             let name = CString::new(name).unwrap();
 
-            check!(av_opt_set_double(
-                self.as_mut_ptr(),
-                name.as_ptr(),
-                value,
-                AV_OPT_SEARCH_CHILDREN
-            ))
+            check!(av_opt_set_double(self.as_mut_ptr(), name.as_ptr(), value, AV_OPT_SEARCH_CHILDREN))
         }
     }
 
@@ -81,12 +57,7 @@ pub trait Settable: Target {
         unsafe {
             let name = CString::new(name).unwrap();
 
-            check!(av_opt_set_q(
-                self.as_mut_ptr(),
-                name.as_ptr(),
-                value.into().into(),
-                AV_OPT_SEARCH_CHILDREN
-            ))
+            check!(av_opt_set_q(self.as_mut_ptr(), name.as_ptr(), value.into().into(), AV_OPT_SEARCH_CHILDREN))
         }
     }
 
@@ -94,13 +65,7 @@ pub trait Settable: Target {
         unsafe {
             let name = CString::new(name).unwrap();
 
-            check!(av_opt_set_image_size(
-                self.as_mut_ptr(),
-                name.as_ptr(),
-                w as c_int,
-                h as c_int,
-                AV_OPT_SEARCH_CHILDREN
-            ))
+            check!(av_opt_set_image_size(self.as_mut_ptr(), name.as_ptr(), w as c_int, h as c_int, AV_OPT_SEARCH_CHILDREN))
         }
     }
 
@@ -108,12 +73,7 @@ pub trait Settable: Target {
         unsafe {
             let name = CString::new(name).unwrap();
 
-            check!(av_opt_set_pixel_fmt(
-                self.as_mut_ptr(),
-                name.as_ptr(),
-                format.into(),
-                AV_OPT_SEARCH_CHILDREN
-            ))
+            check!(av_opt_set_pixel_fmt(self.as_mut_ptr(), name.as_ptr(), format.into(), AV_OPT_SEARCH_CHILDREN))
         }
     }
 
@@ -121,12 +81,7 @@ pub trait Settable: Target {
         unsafe {
             let name = CString::new(name).unwrap();
 
-            check!(av_opt_set_sample_fmt(
-                self.as_mut_ptr(),
-                name.as_ptr(),
-                format.into(),
-                AV_OPT_SEARCH_CHILDREN
-            ))
+            check!(av_opt_set_sample_fmt(self.as_mut_ptr(), name.as_ptr(), format.into(), AV_OPT_SEARCH_CHILDREN))
         }
     }
 
@@ -136,22 +91,12 @@ pub trait Settable: Target {
 
             #[cfg(not(feature = "ffmpeg_7_0"))]
             {
-                check!(av_opt_set_channel_layout(
-                    self.as_mut_ptr(),
-                    name.as_ptr(),
-                    layout.bits() as i64,
-                    AV_OPT_SEARCH_CHILDREN
-                ))
+                check!(av_opt_set_channel_layout(self.as_mut_ptr(), name.as_ptr(), layout.bits() as i64, AV_OPT_SEARCH_CHILDREN))
             }
 
             #[cfg(feature = "ffmpeg_7_0")]
             {
-                check!(av_opt_set_chlayout(
-                    self.as_mut_ptr(),
-                    name.as_ptr(),
-                    &layout.into(),
-                    AV_OPT_SEARCH_CHILDREN
-                ))
+                check!(av_opt_set_chlayout(self.as_mut_ptr(), name.as_ptr(), &layout.into(), AV_OPT_SEARCH_CHILDREN))
             }
         }
     }

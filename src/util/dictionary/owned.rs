@@ -1,7 +1,9 @@
-use std::fmt;
-use std::iter::FromIterator;
-use std::ops::{Deref, DerefMut};
-use std::ptr;
+use std::{
+    fmt,
+    iter::FromIterator,
+    ops::{Deref, DerefMut},
+    ptr,
+};
 
 use super::mutable;
 use crate::ffi::*;
@@ -18,9 +20,7 @@ impl<'a> Default for Owned<'a> {
 
 impl<'a> Owned<'a> {
     pub unsafe fn own(ptr: *mut AVDictionary) -> Self {
-        Owned {
-            inner: unsafe { mutable::Ref::wrap(ptr) },
-        }
+        Owned { inner: unsafe { mutable::Ref::wrap(ptr) } }
     }
 
     pub unsafe fn disown(mut self) -> *mut AVDictionary {
@@ -33,11 +33,7 @@ impl<'a> Owned<'a> {
 
 impl<'a> Owned<'a> {
     pub fn new() -> Self {
-        unsafe {
-            Owned {
-                inner: mutable::Ref::wrap(ptr::null_mut()),
-            }
-        }
+        unsafe { Owned { inner: mutable::Ref::wrap(ptr::null_mut()) } }
     }
 }
 

@@ -1,6 +1,4 @@
-use std::ffi::CStr;
-use std::marker::PhantomData;
-use std::str::from_utf8_unchecked;
+use std::{ffi::CStr, marker::PhantomData, str::from_utf8_unchecked};
 
 use super::{Flags, Pad};
 use crate::ffi::*;
@@ -32,11 +30,7 @@ impl Filter {
         unsafe {
             let ptr = (*self.as_ptr()).description;
 
-            if ptr.is_null() {
-                None
-            } else {
-                Some(from_utf8_unchecked(CStr::from_ptr(ptr).to_bytes()))
-            }
+            if ptr.is_null() { None } else { Some(from_utf8_unchecked(CStr::from_ptr(ptr).to_bytes())) }
         }
     }
 
@@ -89,12 +83,7 @@ pub struct PadIter<'a> {
 
 impl<'a> PadIter<'a> {
     pub fn new(ptr: *const AVFilterPad, count: isize) -> Self {
-        PadIter {
-            ptr,
-            count,
-            cur: 0,
-            _marker: PhantomData,
-        }
+        PadIter { ptr, count, cur: 0, _marker: PhantomData }
     }
 }
 

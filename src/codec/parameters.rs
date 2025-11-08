@@ -1,9 +1,7 @@
-use std::any::Any;
-use std::rc::Rc;
+use std::{any::Any, rc::Rc};
 
 use super::{Context, Id};
-use crate::ffi::*;
-use crate::media;
+use crate::{ffi::*, media};
 
 pub struct Parameters {
     ptr: *mut AVCodecParameters,
@@ -28,12 +26,7 @@ impl Parameters {
 
 impl Parameters {
     pub fn new() -> Self {
-        unsafe {
-            Parameters {
-                ptr: avcodec_parameters_alloc(),
-                owner: None,
-            }
-        }
+        unsafe { Parameters { ptr: avcodec_parameters_alloc(), owner: None } }
     }
 
     pub fn medium(&self) -> media::Type {

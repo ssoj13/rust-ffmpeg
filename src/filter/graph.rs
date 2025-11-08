@@ -1,11 +1,12 @@
-use std::ffi::{CStr, CString};
-use std::ptr;
-use std::str::from_utf8_unchecked;
+use std::{
+    ffi::{CStr, CString},
+    ptr,
+    str::from_utf8_unchecked,
+};
 
 use super::{Context, Filter};
-use crate::ffi::*;
+use crate::{Error, ffi::*};
 use libc::c_int;
-use crate::Error;
 
 pub struct Graph {
     ptr: *mut AVFilterGraph,
@@ -56,14 +57,7 @@ impl Graph {
             let args = CString::new(args).unwrap();
             let mut context = ptr::null_mut();
 
-            match avfilter_graph_create_filter(
-                &mut context as *mut *mut AVFilterContext,
-                filter.as_ptr(),
-                name.as_ptr(),
-                args.as_ptr(),
-                ptr::null_mut(),
-                self.as_mut_ptr(),
-            ) {
+            match avfilter_graph_create_filter(&mut context as *mut *mut AVFilterContext, filter.as_ptr(), name.as_ptr(), args.as_ptr(), ptr::null_mut(), self.as_mut_ptr()) {
                 n if n >= 0 => Ok(Context::wrap(context)),
                 e => Err(Error::from(e)),
             }
@@ -75,11 +69,7 @@ impl Graph {
             let name = CString::new(name).unwrap();
             let ptr = avfilter_graph_get_filter(self.as_mut_ptr(), name.as_ptr());
 
-            if ptr.is_null() {
-                None
-            } else {
-                Some(Context::wrap(ptr))
-            }
+            if ptr.is_null() { None } else { Some(Context::wrap(ptr)) }
         }
     }
 
@@ -124,11 +114,7 @@ pub struct Parser<'a> {
 
 impl<'a> Parser<'a> {
     pub fn new(graph: &mut Graph) -> Parser<'_> {
-        Parser {
-            graph,
-            inputs: ptr::null_mut(),
-            outputs: ptr::null_mut(),
-        }
+        Parser { graph, inputs: ptr::null_mut(), outputs: ptr::null_mut() }
     }
 
     pub fn input(mut self, name: &str, pad: usize) -> Result<Self, Error> {
@@ -187,13 +173,7 @@ impl<'a> Parser<'a> {
         unsafe {
             let spec = CString::new(spec).unwrap();
 
-            let result = avfilter_graph_parse_ptr(
-                self.graph.as_mut_ptr(),
-                spec.as_ptr(),
-                &mut self.inputs,
-                &mut self.outputs,
-                ptr::null_mut(),
-            );
+            let result = avfilter_graph_parse_ptr(self.graph.as_mut_ptr(), spec.as_ptr(), &mut self.inputs, &mut self.outputs, ptr::null_mut());
 
             avfilter_inout_free(&mut self.inputs);
             avfilter_inout_free(&mut self.outputs);

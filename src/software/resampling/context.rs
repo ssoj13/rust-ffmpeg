@@ -1,12 +1,9 @@
 use std::ptr;
 
 use super::Delay;
-use crate::ffi::*;
+use crate::{ChannelLayout, Dictionary, Error, ffi::*, frame, util::format};
 use libc::c_int;
 use std::ffi::c_void;
-use crate::util::format;
-use crate::Dictionary;
-use {crate::frame, crate::ChannelLayout, crate::Error};
 
 #[derive(Eq, PartialEq, Copy, Clone)]
 pub struct Definition {
@@ -38,66 +35,23 @@ impl Context {
 
 impl Context {
     /// Create a resampler with the given definitions.
-    pub fn get(
-        src_format: format::Sample,
-        src_channel_layout: ChannelLayout,
-        src_rate: u32,
-        dst_format: format::Sample,
-        dst_channel_layout: ChannelLayout,
-        dst_rate: u32,
-    ) -> Result<Self, Error> {
-        Self::get_with(
-            src_format,
-            src_channel_layout,
-            src_rate,
-            dst_format,
-            dst_channel_layout,
-            dst_rate,
-            Dictionary::new(),
-        )
+    pub fn get(src_format: format::Sample, src_channel_layout: ChannelLayout, src_rate: u32, dst_format: format::Sample, dst_channel_layout: ChannelLayout, dst_rate: u32) -> Result<Self, Error> {
+        Self::get_with(src_format, src_channel_layout, src_rate, dst_format, dst_channel_layout, dst_rate, Dictionary::new())
     }
 
     /// Create a resampler with the given definitions and custom options dictionary.
-    pub fn get_with(
-        src_format: format::Sample,
-        src_channel_layout: ChannelLayout,
-        src_rate: u32,
-        dst_format: format::Sample,
-        dst_channel_layout: ChannelLayout,
-        dst_rate: u32,
-        options: Dictionary,
-    ) -> Result<Self, Error> {
+    pub fn get_with(src_format: format::Sample, src_channel_layout: ChannelLayout, src_rate: u32, dst_format: format::Sample, dst_channel_layout: ChannelLayout, dst_rate: u32, options: Dictionary) -> Result<Self, Error> {
         unsafe {
             #[allow(unused_assignments)]
             let mut ptr = std::ptr::null_mut();
 
             #[cfg(not(feature = "ffmpeg_7_0"))]
             {
-                ptr = swr_alloc_set_opts(
-                    ptr::null_mut(),
-                    dst_channel_layout.bits() as i64,
-                    dst_format.into(),
-                    dst_rate as c_int,
-                    src_channel_layout.bits() as i64,
-                    src_format.into(),
-                    src_rate as c_int,
-                    0,
-                    ptr::null_mut(),
-                );
+                ptr = swr_alloc_set_opts(ptr::null_mut(), dst_channel_layout.bits() as i64, dst_format.into(), dst_rate as c_int, src_channel_layout.bits() as i64, src_format.into(), src_rate as c_int, 0, ptr::null_mut());
             }
             #[cfg(feature = "ffmpeg_7_0")]
             {
-                let e = swr_alloc_set_opts2(
-                    &mut ptr,
-                    &dst_channel_layout.into(),
-                    dst_format.into(),
-                    dst_rate as c_int,
-                    &src_channel_layout.into(),
-                    src_format.into(),
-                    src_rate as c_int,
-                    0,
-                    ptr::null_mut(),
-                );
+                let e = swr_alloc_set_opts2(&mut ptr, &dst_channel_layout.into(), dst_format.into(), dst_rate as c_int, &src_channel_layout.into(), src_format.into(), src_rate as c_int, 0, ptr::null_mut());
                 if e != 0 {
                     return Err(Error::from(e));
                 }
@@ -115,21 +69,7 @@ impl Context {
                 match swr_init(ptr) {
                     e if e < 0 => Err(Error::from(e)),
 
-                    _ => Ok(Context {
-                        ptr,
-
-                        input: Definition {
-                            format: src_format,
-                            channel_layout: src_channel_layout,
-                            rate: src_rate,
-                        },
-
-                        output: Definition {
-                            format: dst_format,
-                            channel_layout: dst_channel_layout,
-                            rate: dst_rate,
-                        },
-                    }),
+                    _ => Ok(Context { ptr, input: Definition { format: src_format, channel_layout: src_channel_layout, rate: src_rate }, output: Definition { format: dst_format, channel_layout: dst_channel_layout, rate: dst_rate } }),
                 }
             } else {
                 Err(Error::InvalidData)
@@ -160,22 +100,14 @@ impl Context {
     /// Run the resampler from the given input to the given output.
     ///
     /// When there are internal frames to process it will return `Ok(Some(Delay { .. }))`.
-    pub fn run(
-        &mut self,
-        input: &frame::Audio,
-        output: &mut frame::Audio,
-    ) -> Result<Option<Delay>, Error> {
+    pub fn run(&mut self, input: &frame::Audio, output: &mut frame::Audio) -> Result<Option<Delay>, Error> {
         unsafe {
             (*output.as_mut_ptr()).sample_rate = self.output.rate as i32;
         }
 
         unsafe {
             if output.is_empty() {
-                output.alloc(
-                    self.output.format,
-                    input.samples(),
-                    self.output.channel_layout,
-                );
+                output.alloc(self.output.format, input.samples(), self.output.channel_layout);
             }
 
             match swr_convert_frame(self.as_mut_ptr(), output.as_mut_ptr(), input.as_ptr()) {

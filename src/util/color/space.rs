@@ -1,8 +1,6 @@
-use std::ffi::CStr;
-use std::str::from_utf8_unchecked;
+use std::{ffi::CStr, str::from_utf8_unchecked};
 
-use crate::ffi::AVColorSpace::*;
-use crate::ffi::*;
+use crate::ffi::{AVColorSpace::*, *};
 
 #[derive(Eq, PartialEq, Clone, Copy, Debug)]
 pub enum Space {
@@ -40,8 +38,7 @@ impl Space {
         }
         unsafe {
             let ptr = av_color_space_name((*self).into());
-            ptr.as_ref()
-                .map(|ptr| from_utf8_unchecked(CStr::from_ptr(ptr).to_bytes()))
+            ptr.as_ref().map(|ptr| from_utf8_unchecked(CStr::from_ptr(ptr).to_bytes()))
         }
     }
 }

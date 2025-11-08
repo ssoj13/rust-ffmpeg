@@ -1,8 +1,6 @@
-use std::ffi::CStr;
-use std::str::from_utf8_unchecked;
+use std::{ffi::CStr, str::from_utf8_unchecked};
 
-use crate::ffi::AVColorPrimaries::*;
-use crate::ffi::*;
+use crate::ffi::{AVColorPrimaries::*, *};
 
 #[derive(Eq, PartialEq, Clone, Copy, Debug)]
 pub enum Primaries {
@@ -37,8 +35,7 @@ impl Primaries {
         }
         unsafe {
             let ptr = av_color_primaries_name((*self).into());
-            ptr.as_ref()
-                .map(|ptr| from_utf8_unchecked(CStr::from_ptr(ptr).to_bytes()))
+            ptr.as_ref().map(|ptr| from_utf8_unchecked(CStr::from_ptr(ptr).to_bytes()))
         }
     }
 }
