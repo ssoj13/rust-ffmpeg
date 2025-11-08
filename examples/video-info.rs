@@ -1,15 +1,19 @@
 /// Simple video file analyzer
 ///
-/// Usage: cargo run --example video-info -- <video-file>
+/// Usage: cargo run --example video-info -- <video-file> [frames-output-dir]
 ///
 /// Shows:
 /// - File metadata (duration, bitrate, format)
 /// - Stream information (codecs, resolution, fps)
 /// - Frame count estimation
 /// - First frame decoding test
+/// - Dumps first 10 frames to JPEG files (optional)
 
 use ffmpeg_next as ffmpeg;
+use image::{ImageBuffer, Rgb};
 use std::env;
+use std::fs;
+use std::path::Path;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Get filename from args
@@ -134,9 +138,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
-    // === DECODE FIRST FRAME ===
+    // === DECODE AND SAVE FRAMES ===
     if let Some(stream_idx) = video_stream_index {
-        println!("\n🎬 FIRST FRAME TEST");
+        println!("\n🎬 FRAME DECODING TEST");
 
         let input = ictx.stream(stream_idx).unwrap();
         let codec_params = input.parameters();
@@ -145,38 +149,97 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .decoder()
             .video()?;
 
+        let width = decoder.width();
+        let height = decoder.height();
+
+        // Setup output directory for frames
+        let output_dir = if args.len() > 2 {
+            args[2].clone()
+        } else {
+            "./frames".to_string()
+        };
+
+        // Create scaler for YUV420P -> RGB24 conversion
+        let mut scaler = ffmpeg::software::scaling::Context::get(
+            decoder.format(),
+            width,
+            height,
+            ffmpeg::format::Pixel::RGB24,
+            width,
+            height,
+            ffmpeg::software::scaling::Flags::BILINEAR,
+        )?;
+
         let mut ictx = ffmpeg::format::input(&input_file)?;
-        let mut frame_decoded = false;
+        let mut frames_saved = 0;
+        const MAX_FRAMES: usize = 10;
 
         for (stream, packet) in ictx.packets() {
             if stream.index() == stream_idx {
                 decoder.send_packet(&packet)?;
 
                 let mut decoded = ffmpeg::util::frame::video::Video::empty();
-                if decoder.receive_frame(&mut decoded).is_ok() {
-                    println!("  ✓ Successfully decoded first frame!");
-                    println!("    Width: {}", decoded.width());
-                    println!("    Height: {}", decoded.height());
-                    println!("    Format: {:?}", decoded.format());
-                    println!("    PTS: {:?}", decoded.pts());
-                    println!("    Plane count: {}", decoded.planes());
-
-                    for i in 0..decoded.planes() {
-                        println!("    Plane {}: stride = {}, size = {} bytes",
-                            i,
-                            decoded.stride(i),
-                            decoded.data(i).len()
-                        );
+                while decoder.receive_frame(&mut decoded).is_ok() {
+                    if frames_saved == 0 {
+                        println!("  ✓ Successfully decoded first frame!");
+                        println!("    Width: {}", decoded.width());
+                        println!("    Height: {}", decoded.height());
+                        println!("    Format: {:?}", decoded.format());
+                        println!("    PTS: {:?}", decoded.pts());
                     }
 
-                    frame_decoded = true;
+                    // Convert YUV -> RGB
+                    let mut rgb_frame = ffmpeg::util::frame::video::Video::empty();
+                    scaler.run(&decoded, &mut rgb_frame)?;
+
+                    // Save frame as JPEG
+                    if frames_saved < MAX_FRAMES {
+                        // Create output directory if doesn't exist
+                        if frames_saved == 0 {
+                            fs::create_dir_all(&output_dir)?;
+                            println!("\n  📁 Saving frames to: {}/", output_dir);
+                        }
+
+                        let output_path = Path::new(&output_dir).join(format!("frame_{:03}.jpg", frames_saved + 1));
+
+                        // Get RGB data from frame
+                        let rgb_data = rgb_frame.data(0);
+                        let stride = rgb_frame.stride(0);
+
+                        // Create ImageBuffer (handle stride != width*3 case)
+                        let mut img_data = Vec::with_capacity((width * height * 3) as usize);
+                        for y in 0..height {
+                            let row_start = (y * stride as u32) as usize;
+                            let row_end = row_start + (width * 3) as usize;
+                            img_data.extend_from_slice(&rgb_data[row_start..row_end]);
+                        }
+
+                        let img: ImageBuffer<Rgb<u8>, Vec<u8>> = ImageBuffer::from_raw(
+                            width,
+                            height,
+                            img_data,
+                        ).ok_or("Failed to create image buffer")?;
+
+                        img.save(&output_path)?;
+                        println!("  ✓ Saved frame {}/{}: {}", frames_saved + 1, MAX_FRAMES, output_path.display());
+
+                        frames_saved += 1;
+                        if frames_saved >= MAX_FRAMES {
+                            break;
+                        }
+                    }
+                }
+
+                if frames_saved >= MAX_FRAMES {
                     break;
                 }
             }
         }
 
-        if !frame_decoded {
-            println!("  ✗ Failed to decode first frame");
+        if frames_saved == 0 {
+            println!("  ✗ Failed to decode any frames");
+        } else {
+            println!("\n  ✅ Total frames saved: {}", frames_saved);
         }
     } else {
         println!("\n⚠ No video stream found");

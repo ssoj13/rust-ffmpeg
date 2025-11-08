@@ -1,12 +1,22 @@
 # Cargo configuration for rust-ffmpeg
 #
-# This file adds required Windows system libraries for FFmpeg static linking via vcpkg
+# Unified vcpkg static linking configuration for all platforms
+# Ensures consistent builds across Windows, Linux, and macOS
+#
+# Setup:
+#   Windows:  vcpkg install ffmpeg:x64-windows-static-md
+#   Linux:    vcpkg install ffmpeg:x64-linux
+#   macOS:    vcpkg install ffmpeg:arm64-osx  (or x64-osx)
+#
 # Based on: https://github.com/CCExtractor/ccextractor/blob/master/docs/COMPILATION.MD
 
+# ============================================================================
+# WINDOWS (x64-windows-static-md)
+# ============================================================================
 [target.x86_64-pc-windows-msvc]
 rustflags = [
     # Windows system libraries required by FFmpeg static build
-    # Note: x64-windows-static-md uses dynamic CRT, so no +crt-static flag
+    # Note: x64-windows-static-md uses dynamic CRT, static FFmpeg libs
     "-l", "bcrypt",        # BCryptOpenAlgorithmProvider, BCryptGenRandom
     "-l", "user32",        # GetDesktopWindow, window management
     "-l", "ole32",         # CoInitialize, CoUninitialize, COM
@@ -19,4 +29,55 @@ rustflags = [
     "-l", "shlwapi",       # SHCreateStreamOnFileA
     "-l", "gdi32",         # BitBlt, CreateDIBSection, GDI functions
     "-l", "vfw32",         # Video for Windows (capCreateCaptureWindow)
+]
+
+# ============================================================================
+# LINUX (x64-linux)
+# ============================================================================
+[target.x86_64-unknown-linux-gnu]
+rustflags = [
+    # Linux system libraries required by FFmpeg static build
+    # vcpkg handles most dependencies, but these may be needed
+    "-l", "m",             # Math library
+    "-l", "pthread",       # POSIX threads
+    "-l", "dl",            # Dynamic linking
+]
+
+[target.x86_64-unknown-linux-musl]
+rustflags = [
+    # Static musl build for maximum portability
+    "-C", "target-feature=+crt-static",
+    "-l", "static=m",
+    "-l", "static=pthread",
+]
+
+# ============================================================================
+# MACOS (arm64-osx / x64-osx)
+# ============================================================================
+[target.aarch64-apple-darwin]  # Apple Silicon
+rustflags = [
+    # macOS system libraries required by FFmpeg static build
+    "-l", "framework=CoreFoundation",
+    "-l", "framework=CoreMedia",
+    "-l", "framework=CoreVideo",
+    "-l", "framework=VideoToolbox",
+    "-l", "framework=AudioToolbox",
+    "-l", "framework=Security",
+    "-l", "iconv",         # Character encoding conversion
+    "-l", "bz2",           # BZip2 compression
+    "-l", "z",             # ZLib compression
+]
+
+[target.x86_64-apple-darwin]  # Intel Mac
+rustflags = [
+    # macOS system libraries required by FFmpeg static build
+    "-l", "framework=CoreFoundation",
+    "-l", "framework=CoreMedia",
+    "-l", "framework=CoreVideo",
+    "-l", "framework=VideoToolbox",
+    "-l", "framework=AudioToolbox",
+    "-l", "framework=Security",
+    "-l", "iconv",         # Character encoding conversion
+    "-l", "bz2",           # BZip2 compression
+    "-l", "z",             # ZLib compression
 ]

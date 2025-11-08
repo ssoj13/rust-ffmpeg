@@ -120,3 +120,6 @@ default-features = false
 
 [build-dependencies]
 vcpkg = "0.2"
+
+[dev-dependencies]
+image = "0.25"  # For examples that save frames to image files

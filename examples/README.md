@@ -9,7 +9,8 @@ Simple command-line tool to analyze video files and test FFmpeg functionality.
 - **File metadata**: Format, duration, bitrate
 - **Stream information**: Codecs, resolution, FPS, audio channels
 - **Frame count estimation**
-- **First frame decoding test**: Validates decoder functionality
+- **Frame decoding test**: Decodes and saves first 10 frames as JPEG
+- **YUV → RGB conversion**: Using swscale for color space conversion
 
 ### Usage
 
@@ -17,8 +18,14 @@ Simple command-line tool to analyze video files and test FFmpeg functionality.
 # Build
 cargo build --example video-info --release
 
-# Run
+# Run (analysis only)
 .\target\release\examples\video_info.exe <video-file>
+
+# Run with frame extraction to custom directory
+.\target\release\examples\video_info.exe <video-file> <output-dir>
+
+# Example
+.\target\release\examples\video_info.exe sample.mp4 ./my_frames
 ```
 
 ### Example Output
@@ -54,16 +61,26 @@ File: sample.mp4
 📊 FRAME INFO
   Estimated frames: ~300
 
-🎬 FIRST FRAME TEST
+🎬 FRAME DECODING TEST
   ✓ Successfully decoded first frame!
     Width: 1920
     Height: 1080
     Format: Yuv420P(TvRange)
     PTS: Some(0)
-    Plane count: 3
-    Plane 0: stride = 1920, size = 2073600 bytes
-    Plane 1: stride = 960, size = 518400 bytes
-    Plane 2: stride = 960, size = 518400 bytes
+
+  📁 Saving frames to: ./frames/
+  ✓ Saved frame 1/10: ./frames/frame_001.jpg
+  ✓ Saved frame 2/10: ./frames/frame_002.jpg
+  ✓ Saved frame 3/10: ./frames/frame_003.jpg
+  ✓ Saved frame 4/10: ./frames/frame_004.jpg
+  ✓ Saved frame 5/10: ./frames/frame_005.jpg
+  ✓ Saved frame 6/10: ./frames/frame_006.jpg
+  ✓ Saved frame 7/10: ./frames/frame_007.jpg
+  ✓ Saved frame 8/10: ./frames/frame_008.jpg
+  ✓ Saved frame 9/10: ./frames/frame_009.jpg
+  ✓ Saved frame 10/10: ./frames/frame_010.jpg
+
+  ✅ Total frames saved: 10
 
 ✅ Analysis complete!
 ```
