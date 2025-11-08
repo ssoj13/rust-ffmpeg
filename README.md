@@ -53,7 +53,10 @@ Linux/macOS: same, use `./publish.sh` instead
 
 ---
 
+[![Crates.io](https://img.shields.io/crates/v/playa-ffmpeg.svg)](https://crates.io/crates/playa-ffmpeg)
+[![Documentation](https://docs.rs/playa-ffmpeg/badge.svg)](https://docs.rs/playa-ffmpeg)
 [![build](https://github.com/ssoj13/playa-ffmpeg/workflows/build/badge.svg)](https://github.com/ssoj13/playa-ffmpeg/actions)
+[![License](https://img.shields.io/crates/l/playa-ffmpeg.svg)](LICENSE)
 
 This is a fork of [ffmpeg-next](https://crates.io/crates/ffmpeg-next) (originally based on the [ffmpeg](https://crates.io/crates/ffmpeg) crate by [meh.](https://github.com/meh/rust-ffmpeg)).
 
