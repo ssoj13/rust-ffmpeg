@@ -68,19 +68,19 @@ if [ "$PLATFORM" = "linux" ]; then
         ubuntu|debian)
             echo "Installing dependencies for Ubuntu/Debian..."
             sudo apt update
-            sudo apt install -y curl zip unzip tar pkg-config clang git
+            sudo apt install -y curl zip unzip tar pkg-config clang git nasm
             ;;
         fedora|rhel|centos)
             echo "Installing dependencies for Fedora/RHEL..."
-            sudo dnf install -y curl zip unzip tar pkg-config clang git
+            sudo dnf install -y curl zip unzip tar pkg-config clang git nasm
             ;;
         arch|manjaro)
             echo "Installing dependencies for Arch Linux..."
-            sudo pacman -S --needed curl zip unzip tar pkg-config clang git
+            sudo pacman -S --needed curl zip unzip tar pkg-config clang git nasm
             ;;
         *)
             echo "⚠ Unknown distribution: $DISTRO"
-            echo "Please install manually: curl zip unzip tar pkg-config clang git"
+            echo "Please install manually: curl zip unzip tar pkg-config clang git nasm"
             ;;
     esac
 
