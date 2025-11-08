@@ -34,41 +34,21 @@ See [examples/README.md](examples/README.md) for usage examples.
 
 ## Publishing (Maintainers)
 
-This project uses [cargo-release](https://github.com/crate-ci/cargo-release) for automated publishing.
-
-### Quick Release
+Uses [cargo-release](https://github.com/crate-ci/cargo-release). Install: `cargo install cargo-release`
 
 Windows:
 ```powershell
-.\publish.ps1 patch      # 8.0.0 → 8.0.1
-.\publish.ps1 minor      # 8.0.0 → 8.1.0
-.\publish.ps1 major      # 8.0.0 → 9.0.0
+.\publish.ps1        # patch: 8.0.0 → 8.0.1
+.\publish.ps1 minor  # minor: 8.0.0 → 8.1.0
+.\publish.ps1 major  # major: 8.0.0 → 9.0.0
 ```
 
 Linux/macOS:
 ```bash
-./publish.sh patch       # 8.0.0 → 8.0.1
-./publish.sh minor       # 8.0.0 → 8.1.0
-./publish.sh major       # 8.0.0 → 9.0.0
+./publish.sh         # patch: 8.0.0 → 8.0.1
+./publish.sh minor   # minor: 8.0.0 → 8.1.0
+./publish.sh major   # major: 8.0.0 → 9.0.0
 ```
-
-### Dry Run (Preview Changes)
-
-```powershell
-.\publish.ps1 patch --dry-run
-```
-
-```bash
-./publish.sh patch --dry-run
-```
-
-The publish script automatically:
-1. Installs cargo-release if needed
-2. Runs tests
-3. Bumps version in Cargo.toml
-4. Creates git commit and tag
-5. Pushes to GitHub
-6. Publishes to crates.io
 
 ---
 
