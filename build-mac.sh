@@ -83,16 +83,17 @@ fi
 
 # Build rust-ffmpeg
 echo ""
-echo "🦀 Building rust-ffmpeg..."
+echo "🦀 Building rust-ffmpeg library and examples..."
 export VCPKG_ROOT="$HOME/vcpkg"
-cargo build --release
+cargo build --release --examples
 
 echo ""
 echo "✅ Setup complete!"
 echo ""
 echo "Binary location: target/release/"
-echo "Binary size:"
+echo "Binary sizes:"
 ls -lh target/release/libffmpeg_next.* 2>/dev/null || echo "  (library built)"
+ls -lh target/release/examples/video-info 2>/dev/null || true
 
 echo ""
 echo "To use in new terminal:"

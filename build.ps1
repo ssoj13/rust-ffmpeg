@@ -124,24 +124,28 @@ Set-Location $PSScriptRoot
 
 # Build rust-ffmpeg
 Write-Host ""
-Write-Host "Building rust-ffmpeg..." -ForegroundColor Yellow
+Write-Host "Building rust-ffmpeg library and examples..." -ForegroundColor Yellow
 
-cargo build --release
+cargo build --release --examples
 
 Write-Host ""
 Write-Host "Setup complete!" -ForegroundColor Green
 Write-Host ""
 
-# Show library info
+# Show library and example binaries info
 Write-Host "Binary location: target\release\"
-Write-Host "Binary size:"
+Write-Host "Binary sizes:"
 
 $libPath = Get-ChildItem "target\release\ffmpeg_next.dll" -ErrorAction SilentlyContinue
 if ($libPath) {
     $size = $libPath.Length / 1MB
     Write-Host "  ffmpeg_next.dll: $([math]::Round($size, 2)) MB"
-} else {
-    Write-Host "  (library built)"
+}
+
+$examplePath = Get-ChildItem "target\release\examples\video-info.exe" -ErrorAction SilentlyContinue
+if ($examplePath) {
+    $size = $examplePath.Length / 1MB
+    Write-Host "  video-info.exe:  $([math]::Round($size, 2)) MB"
 }
 
 Write-Host ""
