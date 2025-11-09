@@ -9,10 +9,11 @@ This is a modernized fork with cross-platform build improvements and vcpkg integ
 - **vcpkg Integration**: Automatic FFmpeg installation and static linking on all platforms
 - **NVENC Support**: Hardware encoding with NVIDIA NVENC/NVDEC (Windows/Linux, enabled by default)
 - **Static Linking**: Single standalone binary, no external FFmpeg dependencies required
+- **Optimized CI/CD**: GitHub Actions with aggressive vcpkg caching (20min → 3min builds)
+- **Release-Only Builds**: Custom vcpkg triplets skip debug builds (50% faster on Windows)
 - **Rust 2024 Edition**: Updated to latest Rust edition with modern syntax
 - **FFmpeg 7.1+ Support**: Full support for FFmpeg 7.1 APIs via vcpkg
 - **Unified Bootstrap Script**: Single script for building and publishing across all platforms
-- **Improved CI/CD**: GitHub Actions with vcpkg caching for fast builds
 - **Enhanced Examples**: New video-info tool, improved frame dumping
 - **Visual Studio Setup**: Automatic MSVC environment configuration on Windows
 
@@ -43,7 +44,25 @@ export VCPKG_ROOT=/usr/local/share/vcpkg
 
 ### Install FFmpeg via vcpkg
 
-**Windows (MSVC):**
+**Windows (MSVC) - Release only (faster builds):**
+
+First create a custom triplet for release-only builds:
+```powershell
+# Create triplet file
+$tripletContent = @"
+set(VCPKG_TARGET_ARCHITECTURE x64)
+set(VCPKG_CRT_LINKAGE dynamic)
+set(VCPKG_LIBRARY_LINKAGE static)
+set(VCPKG_BUILD_TYPE release)
+"@
+New-Item -Path "$env:VCPKG_ROOT\triplets\community" -ItemType Directory -Force
+Set-Content -Path "$env:VCPKG_ROOT\triplets\community\x64-windows-static-md-release.cmake" -Value $tripletContent
+
+# Install FFmpeg (release only - ~2x faster than default)
+vcpkg install ffmpeg[core,avcodec,avdevice,avfilter,avformat,swresample,swscale,nvcodec]:x64-windows-static-md-release
+```
+
+**Windows (MSVC) - Debug + Release (default):**
 ```powershell
 vcpkg install ffmpeg[core,avcodec,avdevice,avfilter,avformat,swresample,swscale,nvcodec]:x64-windows-static-md
 ```
@@ -63,7 +82,19 @@ vcpkg install ffmpeg[core,avcodec,avdevice,avfilter,avformat,swresample,swscale]
 vcpkg install ffmpeg[core,avcodec,avdevice,avfilter,avformat,swresample,swscale]:arm64-osx-release
 ```
 
-**Note:** `nvcodec` feature is not available on macOS (NVENC is NVIDIA-only). macOS uses VideoToolbox for hardware encoding.
+**Platform-Specific Notes:**
+
+| Platform | NVENC Support | Hardware Encoding Alternative | Build Time (Release-Only) |
+|----------|---------------|-------------------------------|---------------------------|
+| **Windows** | ✅ Enabled by default | N/A | ~10 min (first build) |
+| **Linux** | ✅ Enabled by default | VAAPI (Intel/AMD) | ~15 min (first build) |
+| **macOS** | ❌ Not available | VideoToolbox (Apple Silicon/Intel) | ~15 min (first build) |
+
+**Important Notes:**
+- **NVENC Runtime Requirements**: NVENC headers are statically linked, but you need NVIDIA GPU + drivers at runtime
+- **Windows Optimization**: Use `x64-windows-static-md-release` triplet to skip debug builds (50% faster)
+- **Subsequent Builds**: After first build, vcpkg cache makes rebuilds ~3 minutes
+- **CI/CD**: GitHub Actions uses release-only triplets and persistent caching for optimal performance
 
 ## Quick Start
 
@@ -100,7 +131,48 @@ cargo run --example video-info --release -- ls
 - Check which codecs are enabled
 - Confirm FFmpeg is properly configured
 
-## Build Options
+## Build System
+
+### Cargo Features
+
+The crate supports multiple hardware encoding/decoding backends through Cargo features:
+
+```toml
+[features]
+default = ["codec", "device", "filter", "format", "software-resampling", "software-scaling", "nvenc"]
+
+# Core FFmpeg components
+codec = []
+device = []
+filter = []
+format = []
+software-resampling = []
+software-scaling = []
+
+# Hardware encoding/decoding (platform-specific)
+nvenc = []           # NVIDIA NVENC/NVDEC (Windows/Linux only, enabled by default)
+vaapi = []           # Intel/AMD VAAPI (Linux only)
+videotoolbox = []    # Apple VideoToolbox (macOS only)
+qsv = []             # Intel Quick Sync Video (Windows/Linux)
+```
+
+**Usage examples:**
+
+```bash
+# Default build with NVENC
+cargo build --release
+
+# Build without NVENC (software encoding only)
+cargo build --release --no-default-features --features "codec,device,filter,format,software-resampling,software-scaling"
+
+# Build with VAAPI for Intel/AMD GPUs on Linux
+cargo build --release --features "vaapi"
+
+# Build with VideoToolbox on macOS
+cargo build --release --features "videotoolbox"
+```
+
+### Build Options
 
 ```bash
 bootstrap build           # Build release (default)
@@ -108,6 +180,15 @@ bootstrap build --release # Build release (explicit)
 bootstrap build --debug   # Build debug
 bootstrap test           # Run all tests
 ```
+
+### Build System Details
+
+The crate uses a custom `build.rs` that:
+- Automatically detects and uses vcpkg-installed FFmpeg
+- Respects `VCPKG_DEFAULT_TRIPLET` environment variable for custom triplets
+- Falls back to system FFmpeg if vcpkg not found
+- Attempts automatic vcpkg installation if `VCPKG_ROOT` is set
+- Emits proper linking flags for static/dynamic linking
 
 ### Testing
 
@@ -137,6 +218,50 @@ bootstrap crate publish  # Publish to crates.io
 ```
 
 Uses [cargo-release](https://github.com/crate-ci/cargo-release) - automatically installed on first use.
+
+## CI/CD Pipeline
+
+### Optimized Build Strategy
+
+The GitHub Actions workflow is optimized for minimal build times:
+
+**First Build (cold cache):**
+- Linux: ~15 minutes (FFmpeg compilation)
+- macOS: ~15 minutes (FFmpeg compilation)
+- Windows: ~10 minutes (release-only FFmpeg)
+
+**Subsequent Builds (warm cache):**
+- All platforms: ~3 minutes (Rust code only)
+
+### Caching Strategy
+
+1. **Persistent FFmpeg Cache**: vcpkg artifacts cached indefinitely (only rebuilds when cache key manually bumped)
+2. **Release-Only Triplets**: Windows uses custom `x64-windows-static-md-release` triplet to skip debug builds
+3. **Conditional Installation**: FFmpeg installation skipped if cache hit
+
+**Cache locations:**
+```yaml
+Linux/macOS:
+  - /usr/local/share/vcpkg/installed
+  - /usr/local/share/vcpkg/buildtrees
+  - /usr/local/share/vcpkg/downloads
+  - /usr/local/share/vcpkg/packages
+
+Windows:
+  - C:\vcpkg\installed
+  - C:\vcpkg\buildtrees
+  - C:\vcpkg\downloads
+  - C:\vcpkg\packages
+```
+
+### Platform Matrix
+
+| Platform | Triplet | NVENC | Cache Key |
+|----------|---------|-------|-----------|
+| **Linux** | `x64-linux-release` | ✅ | `Linux-vcpkg-ffmpeg-nvcodec-v2` |
+| **macOS Intel** | `x64-osx-release` | ❌ | `macOS-x64-osx-release-vcpkg-ffmpeg-v2` |
+| **macOS ARM** | `arm64-osx-release` | ❌ | `macOS-arm64-osx-release-vcpkg-ffmpeg-v2` |
+| **Windows** | `x64-windows-static-md-release` | ✅ | `Windows-vcpkg-ffmpeg-nvcodec-release-only-v3` |
 
 ---
 

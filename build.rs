@@ -79,6 +79,12 @@ fn main() {
 }
 
 fn get_vcpkg_triplet() -> String {
+    // Respect VCPKG_DEFAULT_TRIPLET if set (e.g., for release-only builds)
+    if let Ok(triplet) = env::var("VCPKG_DEFAULT_TRIPLET") {
+        return triplet;
+    }
+
+    // Otherwise use platform defaults
     if cfg!(target_os = "windows") {
         if cfg!(target_env = "msvc") {
             // Use static-md for static linking with dynamic CRT

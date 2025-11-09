@@ -2,7 +2,10 @@
   "permissions": {
     "allow": [
       "Bash(pwsh.exe:*)",
-      "mcp__plugin_exa-mcp-server_exa__web_search_exa"
+      "mcp__plugin_exa-mcp-server_exa__web_search_exa",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []

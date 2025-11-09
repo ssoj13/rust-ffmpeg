@@ -17,13 +17,15 @@ jobs:
 
       - name: Cache vcpkg
         uses: actions/cache@v4
+        id: cache-vcpkg-linux
         with:
           path: |
             /usr/local/share/vcpkg/installed
+            /usr/local/share/vcpkg/buildtrees
+            /usr/local/share/vcpkg/downloads
+            /usr/local/share/vcpkg/packages
             ~/.cache/vcpkg
-          key: ${{ runner.os }}-vcpkg-x64-linux-release-${{ hashFiles('.github/workflows/build.yml') }}
-          restore-keys: |
-            ${{ runner.os }}-vcpkg-x64-linux-release-
+          key: ${{ runner.os }}-vcpkg-ffmpeg-nvcodec-v2
 
       - name: Install dependencies
         run: |
@@ -43,10 +45,12 @@ jobs:
           VCPKG_INSTALLATION_ROOT: /usr/local/share/vcpkg
 
       - name: Install FFmpeg via vcpkg
+        if: steps.cache-vcpkg-linux.outputs.cache-hit != 'true'
         run: |
           vcpkg install ffmpeg[core,avcodec,avdevice,avfilter,avformat,swresample,swscale,nvcodec]:x64-linux-release
         env:
           VCPKG_INSTALLATION_ROOT: /usr/local/share/vcpkg
+          VCPKG_BUILD_TYPE: release
 
       - name: Set environment variables
         run: |
@@ -78,16 +82,6 @@ jobs:
         with:
           submodules: true
 
-      - name: Cache vcpkg
-        uses: actions/cache@v4
-        with:
-          path: |
-            /usr/local/share/vcpkg/installed
-            ~/.cache/vcpkg
-          key: ${{ runner.os }}-${{ runner.arch }}-vcpkg-osx-${{ hashFiles('.github/workflows/build.yml') }}
-          restore-keys: |
-            ${{ runner.os }}-${{ runner.arch }}-vcpkg-osx-
-
       - name: Determine triplet
         id: triplet
         run: |
@@ -96,6 +90,18 @@ jobs:
           else
             echo "triplet=x64-osx-release" >> $GITHUB_OUTPUT
           fi
+
+      - name: Cache vcpkg
+        uses: actions/cache@v4
+        id: cache-vcpkg-macos
+        with:
+          path: |
+            /usr/local/share/vcpkg/installed
+            /usr/local/share/vcpkg/buildtrees
+            /usr/local/share/vcpkg/downloads
+            /usr/local/share/vcpkg/packages
+            ~/.cache/vcpkg
+          key: ${{ runner.os }}-${{ steps.triplet.outputs.triplet }}-vcpkg-ffmpeg-v2
 
       - name: Install dependencies
         run: |
@@ -110,10 +116,12 @@ jobs:
           VCPKG_INSTALLATION_ROOT: /usr/local/share/vcpkg
 
       - name: Install FFmpeg via vcpkg
+        if: steps.cache-vcpkg-macos.outputs.cache-hit != 'true'
         run: |
           vcpkg install ffmpeg[core,avcodec,avdevice,avfilter,avformat,swresample,swscale]:${{ steps.triplet.outputs.triplet }}
         env:
           VCPKG_INSTALLATION_ROOT: /usr/local/share/vcpkg
+          VCPKG_BUILD_TYPE: release
 
       - name: Set environment variables
         run: |
@@ -141,7 +149,9 @@ jobs:
     name: Windows - FFmpeg 7.1 vcpkg static - build, test and lint
     runs-on: windows-latest
     env:
-      VCPKG_DEFAULT_TRIPLET: x64-windows-static-md
+      VCPKG_DEFAULT_TRIPLET: x64-windows-static-md-release
+      VCPKGRS_TRIPLET: x64-windows-static-md-release
+      VCPKG_ROOT: C:\vcpkg
     steps:
       - uses: actions/checkout@v4
         with:
@@ -149,38 +159,56 @@ jobs:
 
       - name: Cache vcpkg
         uses: actions/cache@v4
+        id: cache-vcpkg-windows
         with:
           path: |
             C:\vcpkg\installed
+            C:\vcpkg\buildtrees
+            C:\vcpkg\downloads
+            C:\vcpkg\packages
             ~\AppData\Local\vcpkg\archives
-          key: ${{ runner.os }}-vcpkg-x64-windows-static-md-${{ hashFiles('.github/workflows/build.yml') }}
-          restore-keys: |
-            ${{ runner.os }}-vcpkg-x64-windows-static-md-
+          key: ${{ runner.os }}-vcpkg-ffmpeg-nvcodec-release-only-v3
+
+      - name: Create custom release-only triplet
+        run: |
+          $tripletContent = @"
+          set(VCPKG_TARGET_ARCHITECTURE x64)
+          set(VCPKG_CRT_LINKAGE dynamic)
+          set(VCPKG_LIBRARY_LINKAGE static)
+          set(VCPKG_BUILD_TYPE release)
+          "@
+          New-Item -Path "C:\vcpkg\triplets\community" -ItemType Directory -Force | Out-Null
+          Set-Content -Path "C:\vcpkg\triplets\community\x64-windows-static-md-release.cmake" -Value $tripletContent
 
       - name: Install dependencies
         run: |
           $VCINSTALLDIR = $(& "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath)
           Add-Content $env:GITHUB_ENV "LIBCLANG_PATH=${VCINSTALLDIR}\VC\Tools\LLVM\x64\bin`n"
-          Add-Content $env:GITHUB_ENV "VCPKG_ROOT=C:\vcpkg`n"
 
       - name: Install FFmpeg via vcpkg
+        if: steps.cache-vcpkg-windows.outputs.cache-hit != 'true'
         run: |
-          vcpkg install ffmpeg[core,avcodec,avdevice,avfilter,avformat,swresample,swscale,nvcodec]:x64-windows-static-md
+          vcpkg install ffmpeg[core,avcodec,avdevice,avfilter,avformat,swresample,swscale,nvcodec]:x64-windows-static-md-release
         env:
           VCPKG_INSTALLATION_ROOT: C:\vcpkg
+
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
+
       - name: Build
         run: |
           cargo build --examples
+
       - name: Test
         run: |
           cargo test --examples
+
       - name: Lint
         run: |
           cargo clippy --examples -- -D warnings
+
       - name: Check format
         run: |
           cargo fmt -- --check
