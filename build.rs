@@ -66,19 +66,20 @@ fn main() {
 fn get_vcpkg_triplet() -> String {
     if cfg!(target_os = "windows") {
         if cfg!(target_env = "msvc") {
-            "x64-windows".to_string()
+            // Use static-md for static linking with dynamic CRT
+            "x64-windows-static-md".to_string()
         } else {
-            "x64-mingw-dynamic".to_string()
+            "x64-mingw-static".to_string()
         }
     } else if cfg!(target_os = "macos") {
         if cfg!(target_arch = "aarch64") {
-            "arm64-osx".to_string()
+            "arm64-osx-release".to_string()
         } else {
-            "x64-osx".to_string()
+            "x64-osx-release".to_string()
         }
     } else {
-        // Linux
-        "x64-linux".to_string()
+        // Linux - static linking
+        "x64-linux-release".to_string()
     }
 }
 
