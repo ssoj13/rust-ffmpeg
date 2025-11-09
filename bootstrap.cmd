@@ -71,10 +71,10 @@ goto :help
 
     if /i "%~2"=="publish" (
         echo Publishing crate to crates.io...
-        cargo release --execute
+        cargo release patch --execute
     ) else (
-        echo Dry-run mode
-        cargo release
+        echo Dry-run mode (use 'bootstrap crate publish' to actually publish)
+        cargo release patch
     )
     exit /b %errorlevel%
 
