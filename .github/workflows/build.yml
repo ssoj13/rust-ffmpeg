@@ -20,10 +20,14 @@ jobs:
         with:
           path: |
             /usr/local/share/vcpkg/installed
+            /usr/local/share/vcpkg/buildtrees
+            /usr/local/share/vcpkg/downloads
+            /usr/local/share/vcpkg/packages
             ~/.cache/vcpkg
-          key: ${{ runner.os }}-vcpkg-x64-linux-release-${{ hashFiles('.github/workflows/build.yml') }}
+          key: ${{ runner.os }}-vcpkg-ffmpeg-nvcodec-${{ hashFiles('.github/workflows/build.yml') }}-v2
           restore-keys: |
-            ${{ runner.os }}-vcpkg-x64-linux-release-
+            ${{ runner.os }}-vcpkg-ffmpeg-nvcodec-${{ hashFiles('.github/workflows/build.yml') }}-
+            ${{ runner.os }}-vcpkg-ffmpeg-nvcodec-
 
       - name: Install dependencies
         run: |
@@ -84,10 +88,14 @@ jobs:
         with:
           path: |
             /usr/local/share/vcpkg/installed
+            /usr/local/share/vcpkg/buildtrees
+            /usr/local/share/vcpkg/downloads
+            /usr/local/share/vcpkg/packages
             ~/.cache/vcpkg
-          key: ${{ runner.os }}-${{ runner.arch }}-vcpkg-osx-${{ hashFiles('.github/workflows/build.yml') }}
+          key: ${{ runner.os }}-${{ runner.arch }}-vcpkg-ffmpeg-${{ hashFiles('.github/workflows/build.yml') }}-v2
           restore-keys: |
-            ${{ runner.os }}-${{ runner.arch }}-vcpkg-osx-
+            ${{ runner.os }}-${{ runner.arch }}-vcpkg-ffmpeg-${{ hashFiles('.github/workflows/build.yml') }}-
+            ${{ runner.os }}-${{ runner.arch }}-vcpkg-ffmpeg-
 
       - name: Determine triplet
         id: triplet
@@ -155,10 +163,14 @@ jobs:
         with:
           path: |
             C:\vcpkg\installed
+            C:\vcpkg\buildtrees
+            C:\vcpkg\downloads
+            C:\vcpkg\packages
             ~\AppData\Local\vcpkg\archives
-          key: ${{ runner.os }}-vcpkg-x64-windows-static-md-${{ hashFiles('.github/workflows/build.yml') }}
+          key: ${{ runner.os }}-vcpkg-ffmpeg-nvcodec-${{ hashFiles('.github/workflows/build.yml') }}-v2
           restore-keys: |
-            ${{ runner.os }}-vcpkg-x64-windows-static-md-
+            ${{ runner.os }}-vcpkg-ffmpeg-nvcodec-${{ hashFiles('.github/workflows/build.yml') }}-
+            ${{ runner.os }}-vcpkg-ffmpeg-nvcodec-
 
       - name: Install dependencies
         run: |
