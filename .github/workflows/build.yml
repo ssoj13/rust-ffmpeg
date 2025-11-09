@@ -17,6 +17,7 @@ jobs:
 
       - name: Cache vcpkg
         uses: actions/cache@v4
+        id: cache-vcpkg-linux
         with:
           path: |
             /usr/local/share/vcpkg/installed
@@ -24,10 +25,7 @@ jobs:
             /usr/local/share/vcpkg/downloads
             /usr/local/share/vcpkg/packages
             ~/.cache/vcpkg
-          key: ${{ runner.os }}-vcpkg-ffmpeg-nvcodec-${{ hashFiles('.github/workflows/build.yml') }}-v2
-          restore-keys: |
-            ${{ runner.os }}-vcpkg-ffmpeg-nvcodec-${{ hashFiles('.github/workflows/build.yml') }}-
-            ${{ runner.os }}-vcpkg-ffmpeg-nvcodec-
+          key: ${{ runner.os }}-vcpkg-ffmpeg-nvcodec-v2
 
       - name: Install dependencies
         run: |
@@ -47,6 +45,7 @@ jobs:
           VCPKG_INSTALLATION_ROOT: /usr/local/share/vcpkg
 
       - name: Install FFmpeg via vcpkg
+        if: steps.cache-vcpkg-linux.outputs.cache-hit != 'true'
         run: |
           vcpkg install ffmpeg[core,avcodec,avdevice,avfilter,avformat,swresample,swscale,nvcodec]:x64-linux-release
         env:
@@ -83,20 +82,6 @@ jobs:
         with:
           submodules: true
 
-      - name: Cache vcpkg
-        uses: actions/cache@v4
-        with:
-          path: |
-            /usr/local/share/vcpkg/installed
-            /usr/local/share/vcpkg/buildtrees
-            /usr/local/share/vcpkg/downloads
-            /usr/local/share/vcpkg/packages
-            ~/.cache/vcpkg
-          key: ${{ runner.os }}-${{ runner.arch }}-vcpkg-ffmpeg-${{ hashFiles('.github/workflows/build.yml') }}-v2
-          restore-keys: |
-            ${{ runner.os }}-${{ runner.arch }}-vcpkg-ffmpeg-${{ hashFiles('.github/workflows/build.yml') }}-
-            ${{ runner.os }}-${{ runner.arch }}-vcpkg-ffmpeg-
-
       - name: Determine triplet
         id: triplet
         run: |
@@ -105,6 +90,18 @@ jobs:
           else
             echo "triplet=x64-osx-release" >> $GITHUB_OUTPUT
           fi
+
+      - name: Cache vcpkg
+        uses: actions/cache@v4
+        id: cache-vcpkg-macos
+        with:
+          path: |
+            /usr/local/share/vcpkg/installed
+            /usr/local/share/vcpkg/buildtrees
+            /usr/local/share/vcpkg/downloads
+            /usr/local/share/vcpkg/packages
+            ~/.cache/vcpkg
+          key: ${{ runner.os }}-${{ steps.triplet.outputs.triplet }}-vcpkg-ffmpeg-v2
 
       - name: Install dependencies
         run: |
@@ -119,6 +116,7 @@ jobs:
           VCPKG_INSTALLATION_ROOT: /usr/local/share/vcpkg
 
       - name: Install FFmpeg via vcpkg
+        if: steps.cache-vcpkg-macos.outputs.cache-hit != 'true'
         run: |
           vcpkg install ffmpeg[core,avcodec,avdevice,avfilter,avformat,swresample,swscale]:${{ steps.triplet.outputs.triplet }}
         env:
@@ -160,6 +158,7 @@ jobs:
 
       - name: Cache vcpkg
         uses: actions/cache@v4
+        id: cache-vcpkg-windows
         with:
           path: |
             C:\vcpkg\installed
@@ -167,10 +166,7 @@ jobs:
             C:\vcpkg\downloads
             C:\vcpkg\packages
             ~\AppData\Local\vcpkg\archives
-          key: ${{ runner.os }}-vcpkg-ffmpeg-nvcodec-release-only-${{ hashFiles('.github/workflows/build.yml') }}-v3
-          restore-keys: |
-            ${{ runner.os }}-vcpkg-ffmpeg-nvcodec-release-only-${{ hashFiles('.github/workflows/build.yml') }}-
-            ${{ runner.os }}-vcpkg-ffmpeg-nvcodec-release-only-
+          key: ${{ runner.os }}-vcpkg-ffmpeg-nvcodec-release-only-v3
 
       - name: Create custom release-only triplet
         run: |
@@ -189,6 +185,7 @@ jobs:
           Add-Content $env:GITHUB_ENV "LIBCLANG_PATH=${VCINSTALLDIR}\VC\Tools\LLVM\x64\bin`n"
 
       - name: Install FFmpeg via vcpkg
+        if: steps.cache-vcpkg-windows.outputs.cache-hit != 'true'
         run: |
           vcpkg install ffmpeg[core,avcodec,avdevice,avfilter,avformat,swresample,swscale,nvcodec]:x64-windows-static-md-release
         env:
