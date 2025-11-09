@@ -144,6 +144,7 @@ jobs:
     runs-on: windows-latest
     env:
       VCPKG_DEFAULT_TRIPLET: x64-windows-static-md
+      VCPKG_ROOT: C:\vcpkg
     steps:
       - uses: actions/checkout@v4
         with:
@@ -163,7 +164,6 @@ jobs:
         run: |
           $VCINSTALLDIR = $(& "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath)
           Add-Content $env:GITHUB_ENV "LIBCLANG_PATH=${VCINSTALLDIR}\VC\Tools\LLVM\x64\bin`n"
-          Add-Content $env:GITHUB_ENV "VCPKG_ROOT=C:\vcpkg`n"
 
       - name: Install FFmpeg via vcpkg
         run: |
@@ -176,15 +176,19 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
+
       - name: Build
         run: |
           cargo build --examples
+
       - name: Test
         run: |
           cargo test --examples
+
       - name: Lint
         run: |
           cargo clippy --examples -- -D warnings
+
       - name: Check format
         run: |
           cargo fmt -- --check
