@@ -1,7 +1,10 @@
 use image::{ImageBuffer, Rgb};
 /// Simple video file analyzer
 ///
-/// Usage: cargo run --example video-info -- <video-file> [frames-output-dir]
+/// Usage:
+///   cargo run --example video-info -- ls                    # List all codecs
+///   cargo run --example video-info -- <video-file>          # Analyze video
+///   cargo run --example video-info -- <video-file> <dir>    # Analyze + save frames
 ///
 /// Shows:
 /// - File metadata (duration, bitrate, format)
@@ -10,23 +13,122 @@ use image::{ImageBuffer, Rgb};
 /// - First frame decoding test
 /// - Dumps first 10 frames to JPEG files (optional)
 use playa_ffmpeg as ffmpeg;
-use std::{env, fs, path::Path};
+use std::{env, fs, path::Path, ptr};
+
+fn list_codecs() {
+    println!("=== FFmpeg Available Codecs ===\n");
+
+    let mut video_decoders = Vec::new();
+    let mut audio_decoders = Vec::new();
+    let mut video_encoders = Vec::new();
+    let mut audio_encoders = Vec::new();
+
+    // Use FFI to iterate through all codecs
+    unsafe {
+        let mut opaque: *mut std::ffi::c_void = ptr::null_mut();
+
+        loop {
+            let codec_ptr = ffmpeg::ffi::av_codec_iterate(&mut opaque as *mut *mut std::ffi::c_void);
+            if codec_ptr.is_null() {
+                break;
+            }
+
+            let codec = ffmpeg::Codec::wrap(codec_ptr);
+            let medium = codec.medium();
+            let name = codec.name().to_string();
+            let desc = codec.description().to_string();
+
+            match medium {
+                ffmpeg::media::Type::Video => {
+                    if codec.is_decoder() {
+                        video_decoders.push((name.clone(), desc.clone()));
+                    }
+                    if codec.is_encoder() {
+                        video_encoders.push((name, desc));
+                    }
+                }
+                ffmpeg::media::Type::Audio => {
+                    if codec.is_decoder() {
+                        audio_decoders.push((name.clone(), desc.clone()));
+                    }
+                    if codec.is_encoder() {
+                        audio_encoders.push((name, desc));
+                    }
+                }
+                _ => {}
+            }
+        }
+    }
+
+    // Sort by name
+    video_decoders.sort_by(|a, b| a.0.cmp(&b.0));
+    audio_decoders.sort_by(|a, b| a.0.cmp(&b.0));
+    video_encoders.sort_by(|a, b| a.0.cmp(&b.0));
+    audio_encoders.sort_by(|a, b| a.0.cmp(&b.0));
+
+    // Print decoders
+    println!("📥 DECODERS\n");
+
+    println!("Video Decoders ({}):", video_decoders.len());
+    for (name, desc) in &video_decoders {
+        println!("  {:20} - {}", name, desc);
+    }
+    println!();
+
+    println!("Audio Decoders ({}):", audio_decoders.len());
+    for (name, desc) in &audio_decoders {
+        println!("  {:20} - {}", name, desc);
+    }
+    println!();
+
+    // Print encoders
+    println!("📤 ENCODERS\n");
+
+    println!("Video Encoders ({}):", video_encoders.len());
+    for (name, desc) in &video_encoders {
+        println!("  {:20} - {}", name, desc);
+    }
+    println!();
+
+    println!("Audio Encoders ({}):", audio_encoders.len());
+    for (name, desc) in &audio_encoders {
+        println!("  {:20} - {}", name, desc);
+    }
+    println!();
+
+    // Summary
+    println!("📊 SUMMARY");
+    println!("  Total Video Decoders: {}", video_decoders.len());
+    println!("  Total Audio Decoders: {}", audio_decoders.len());
+    println!("  Total Video Encoders: {}", video_encoders.len());
+    println!("  Total Audio Encoders: {}", audio_encoders.len());
+}
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Initialize FFmpeg
+    ffmpeg::init()?;
+
     // Get filename from args
     let args: Vec<String> = env::args().collect();
     if args.len() < 2 {
-        eprintln!("Usage: {} <video-file>", args[0]);
-        eprintln!("\nExample: {} sample.mp4", args[0]);
+        eprintln!("Usage: {} <video-file|ls>", args[0]);
+        eprintln!("\nExamples:");
+        eprintln!("  {} ls                    # List all available codecs", args[0]);
+        eprintln!("  {} sample.mp4            # Analyze video file", args[0]);
+        eprintln!("  {} sample.mp4 ./frames   # Analyze + save frames", args[0]);
         std::process::exit(1);
     }
 
     let input_file = &args[1];
+
+    // Check for 'ls' command
+    if input_file == "ls" {
+        list_codecs();
+        return Ok(());
+    }
+
     println!("=== FFmpeg Video Analyzer ===\n");
     println!("File: {}\n", input_file);
-
-    // Initialize FFmpeg
-    ffmpeg::init()?;
 
     // Open input file
     let ictx = ffmpeg::format::input(&input_file)?;
