@@ -77,7 +77,28 @@ bootstrap.cmd build
 ./bootstrap.sh build
 ```
 
-See [examples/README.md](examples/README.md) for usage examples.
+See [examples/README.md](examples/README.md) for detailed usage examples.
+
+### Quick Test: List Available Codecs
+
+```bash
+# Build and run video-info example
+cargo build --example video-info --release
+
+# List all available codecs (hardware + software)
+cargo run --example video-info --release -- ls
+```
+
+**Output:**
+- Video decoders: H264, H265, VP9, AV1, MPEG4, etc.
+- Video encoders: libx264, libx265, NVENC (if GPU available), etc.
+- Audio decoders: AAC, MP3, Opus, Vorbis, etc.
+- Audio encoders: AAC, MP3, Opus, etc.
+
+**Why use this:**
+- Verify NVENC is available on your system
+- Check which codecs are enabled
+- Confirm FFmpeg is properly configured
 
 ## Build Options
 
@@ -85,7 +106,28 @@ See [examples/README.md](examples/README.md) for usage examples.
 bootstrap build           # Build release (default)
 bootstrap build --release # Build release (explicit)
 bootstrap build --debug   # Build debug
+bootstrap test           # Run all tests
 ```
+
+### Testing
+
+Run tests to verify FFmpeg integration:
+
+```bash
+# All tests
+bootstrap test
+
+# Or directly with cargo
+cargo test --examples
+```
+
+**What it does:**
+- Verifies FFmpeg libraries are properly linked
+- Tests basic codec functionality
+- Validates video/audio decoding
+- Checks frame extraction and color space conversion
+
+**Test output location:** `target/debug/` or `target/release/`
 
 ## Publishing (Maintainers)
 
